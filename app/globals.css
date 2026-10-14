@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy: #0B1E3F;
+  --signal: #FF6B1A;
+}
+
+html, body { height: 100%; }
+body {
+  @apply bg-offwhite text-navy antialiased;
+  font-feature-settings: "cv11", "ss01";
+}
+
+/* Subtle selection color */
+::selection { background: rgba(255,107,26,0.25); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(11,30,63,0.18); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(11,30,63,0.28); }
