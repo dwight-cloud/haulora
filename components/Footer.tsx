@@ -17,7 +17,7 @@ export function Footer() {
       </div>
       <div className="border-t border-white/5">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 text-xs text-offwhite/50">
-          <div>© {new Date().getFullYear()} Overdrive Nav. All rights reserved.</div>
+          <div>© {new Date().getFullYear()} LogisticMind. All rights reserved.</div>
           <div className="flex items-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
             All systems operational

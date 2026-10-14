@@ -19,7 +19,7 @@ export default {
           900: "#061433",
           950: "#030B21",
         },
-        // "Clear Path blue" — primary accent from the Gorilla Safety brand
+        // primary accent
         signal: {
           DEFAULT: "#1F8BFF",
           50:  "#EAF3FF",
@@ -33,7 +33,7 @@ export default {
           800: "#073E7D",
           900: "#04274E",
         },
-        // Retained orange accent (matches the gorilla eye + CTA contrast)
+        // warning/CTA accent
         ember: {
           DEFAULT: "#FF6B1A",
           300: "#FFA166",
@@ -43,7 +43,7 @@ export default {
         offwhite: "#F7F5F0",
         // Neutral grayscale — used for text hierarchy, borders, surfaces.
         // Separate from `navy` (brand) so we don't have to express "muted text"
-        // as `text-navy/60` everywhere. Close to Samsara/Linear neutrals.
+        // as `text-navy/60` everywhere. Neutral greys.
         ink: {
           50:  "#F8FAFC",
           100: "#F1F5F9",
@@ -65,7 +65,7 @@ export default {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
       },
       boxShadow: {
-        // Softer, closer to Samsara/Linear. Cards rely on the 1px border primarily.
+        // Cards rely on the 1px border primarily.
         card:       "0 1px 2px rgba(15,23,42,0.04)",
         "card-lg":  "0 4px 16px rgba(15,23,42,0.06)",
         glow:       "0 0 0 1px rgba(31,139,255,0.20), 0 8px 24px rgba(31,139,255,0.22)",

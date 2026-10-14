@@ -1,8 +1,7 @@
 import Link from "next/link";
 import {
-  BarChart3, Briefcase, ClipboardCheck, FileText, FileCheck2,
-  Gauge, LayoutGrid, LifeBuoy, MapPinned, MessageSquare, Network,
-  Route, Settings2, Shield, ShieldAlert, Truck, Users, Wrench,
+  Bot, CheckSquare, FlaskConical, LayoutGrid, LifeBuoy, MapPinned,
+  Network, Route, Users,
 } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { Wordmark } from "./Logo";
@@ -24,8 +23,8 @@ export async function Nav() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
           <Link href="/" className="text-ink-900"><Wordmark /></Link>
           <nav className="flex items-center gap-1 text-sm">
-            <TopLink href="/#features">Features</TopLink>
-            <TopLink href="/#pricing">Pricing</TopLink>
+            <TopLink href="/#agents">Agents</TopLink>
+            <TopLink href="/about">How it works</TopLink>
             <Link
               href="/login"
               className="ml-3 rounded-lg bg-ink-900 px-3.5 py-1.5 text-sm font-semibold text-white transition hover:bg-ink-800"
@@ -36,7 +35,7 @@ export async function Nav() {
     );
   }
 
-  const dispatcher = session.role === "dispatcher";
+  void session.role;
 
   return (
     <>
@@ -57,53 +56,33 @@ export async function Nav() {
 
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-ink-200 bg-white md:flex">
         <div className="flex h-14 shrink-0 items-center border-b border-ink-100 px-5">
-          <Link href={dispatcher ? "/dashboard" : "/driver"} className="text-ink-900">
+          <Link href="/dashboard" className="text-ink-900">
             <Wordmark />
           </Link>
         </div>
 
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-4">
-          {dispatcher ? (
-            <>
-              <SectionLabel>Fleet</SectionLabel>
-              <SideLink href="/dashboard" icon={<LayoutGrid />}>Dashboard</SideLink>
-              <SideLink href="/team"      icon={<Users />}>Team</SideLink>
-              <SideLink href="/carriers"  icon={<Briefcase />}>Carriers</SideLink>
-              <SideLink href="/messages"  icon={<MessageSquare />}>Messages</SideLink>
+          <SectionLabel>Copilot</SectionLabel>
+          <SideLink href="/dashboard" icon={<LayoutGrid />}>Dashboard</SideLink>
+          <SideLink href="/agents"    icon={<Bot />}>Agents</SideLink>
+          <SideLink href="/approvals" icon={<CheckSquare />}>Approvals</SideLink>
+          <SideLink href="/evals"     icon={<FlaskConical />}>Evals &amp; cost</SideLink>
 
-              <SectionLabel className="mt-5">Planning</SectionLabel>
-              <SideLink href="/plan"     icon={<Route />}>Plan route</SideLink>
-              <SideLink href="/sequence" icon={<MapPinned />}>Multi-stop</SideLink>
-              <SideLink href="/tours"    icon={<Network />}>Tour planner</SideLink>
+          <SectionLabel className="mt-5">Planning</SectionLabel>
+          <SideLink href="/plan"     icon={<Route />}>Plan route</SideLink>
+          <SideLink href="/sequence" icon={<MapPinned />}>Multi-stop</SideLink>
+          <SideLink href="/tours"    icon={<Network />}>Tour planner</SideLink>
 
-              <SectionLabel className="mt-5">Admin</SectionLabel>
-              <SideLink href="/permits"      icon={<Shield />}>Permits</SideLink>
-              <SideLink href="/integrations" icon={<Settings2 />}>Integrations</SideLink>
-            </>
-          ) : (
-            <>
-              <SectionLabel>Driving</SectionLabel>
-              <SideLink href="/driver"    icon={<Truck />}>Today</SideLink>
-              <SideLink href="/hos"       icon={<Gauge />}>HOS</SideLink>
-              <SideLink href="/dvir"      icon={<Wrench />}>DVIR</SideLink>
-              <SideLink href="/pod"       icon={<ClipboardCheck />}>POD</SideLink>
-
-              <SectionLabel className="mt-5">Records</SectionLabel>
-              <SideLink href="/documents" icon={<FileText />}>Documents</SideLink>
-              <SideLink href="/ifta"      icon={<FileCheck2 />}>IFTA</SideLink>
-              <SideLink href="/reports"   icon={<BarChart3 />}>Reports</SideLink>
-              <SideLink href="/scorecard" icon={<ShieldAlert />}>Scorecard</SideLink>
-            </>
-          )}
+          <SectionLabel className="mt-5">Admin</SectionLabel>
+          <SideLink href="/team"     icon={<Users />}>Team</SideLink>
 
           <div className="mt-auto pt-4">
-            <a
-              href="https://developer.here.com/"
-              target="_blank" rel="noreferrer"
+            <Link
+              href="/about"
               className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium text-ink-500 hover:bg-ink-50 hover:text-ink-700"
             >
-              <LifeBuoy className="h-3.5 w-3.5" /> Help &amp; docs
-            </a>
+              <LifeBuoy className="h-3.5 w-3.5" /> How this works
+            </Link>
           </div>
         </nav>
 
@@ -121,7 +100,7 @@ export async function Nav() {
 
       {/* Mobile-only top bar (sidebar hidden below md). Keeps the sign-in brand visible. */}
       <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b border-ink-200 bg-white/90 px-4 backdrop-blur md:hidden">
-        <Link href={dispatcher ? "/dashboard" : "/driver"} className="text-ink-900"><Wordmark /></Link>
+        <Link href="/dashboard" className="text-ink-900"><Wordmark /></Link>
         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-ink-900 text-[10px] font-bold text-white">
           {initials(session.name)}
         </div>

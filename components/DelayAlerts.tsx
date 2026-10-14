@@ -142,7 +142,7 @@ export function DelayAlerts() {
 
 // -------- localStorage helpers --------
 
-const STORAGE_KEY = "overdrive.delay-alerts.lastNotified";
+const STORAGE_KEY = "lm.delay-alerts.lastNotified";
 
 function loadLastNotified(): Map<string, number> {
   if (typeof window === "undefined") return new Map();

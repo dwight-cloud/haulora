@@ -227,7 +227,7 @@ export default async function DashboardPage() {
             {[
               { t: "Fuel network",       s: "Connect your negotiated program" },
               { t: "511 cameras & traffic", s: "DOT feeds on the map" },
-              { t: "ELD sync",           s: "Samsara, Motive, Geotab & more" },
+              { t: "ELD sync",           s: "Telematics providers (roadmap)" },
             ].map((x) => (
               <Card key={x.t} className="border-dashed">
                 <CardBody className="flex items-center justify-between py-4">

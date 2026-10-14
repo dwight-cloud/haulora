@@ -89,7 +89,7 @@ function LoginForm() {
           </div>
 
           <div className="text-xs text-offwhite/50">
-            © {new Date().getFullYear()} Overdrive Nav · <Link href="/privacy" className="hover:text-ink-900">Privacy</Link> · <Link href="/terms" className="hover:text-ink-900">Terms</Link>
+            © {new Date().getFullYear()} LogisticMind · <Link href="/privacy" className="hover:text-ink-900">Privacy</Link> · <Link href="/terms" className="hover:text-ink-900">Terms</Link>
           </div>
         </div>
       </aside>
@@ -175,14 +175,14 @@ function LoginForm() {
                 <span className="h-1.5 w-1.5 rounded-full bg-ink-900" /> Demo accounts
               </div>
               <div className="mt-3 flex flex-col gap-2 text-sm">
-                <button onClick={() => { setEmail("dispatch@overdrive.app"); setPassword("dispatch123"); }}
+                <button onClick={() => { setEmail("dispatch@demo.local"); setPassword("dispatch123"); }}
                         className="flex items-center justify-between rounded-lg bg-ink-50/60 px-3 py-2 text-left font-mono text-xs hover:bg-ink-100">
-                  <span>dispatch@overdrive.app · dispatch123</span>
+                  <span>dispatch@demo.local · dispatch123</span>
                   <span className="rounded bg-ink-100 px-1.5 py-0.5 text-[10px] font-sans font-bold uppercase tracking-widest text-ink-500">Dispatcher</span>
                 </button>
-                <button onClick={() => { setEmail("driver@overdrive.app"); setPassword("driver123"); }}
+                <button onClick={() => { setEmail("driver@demo.local"); setPassword("driver123"); }}
                         className="flex items-center justify-between rounded-lg bg-ink-50/60 px-3 py-2 text-left font-mono text-xs hover:bg-ink-100">
-                  <span>driver@overdrive.app · driver123</span>
+                  <span>driver@demo.local · driver123</span>
                   <span className="rounded bg-ink-900/15 px-1.5 py-0.5 text-[10px] font-sans font-bold uppercase tracking-widest text-white-700">Driver</span>
                 </button>
               </div>

@@ -95,7 +95,7 @@ export function Button({
 }
 
 // -------- Pill (status indicator) --------
-// Small dot + text. No filled color backgrounds — Samsara-style restraint.
+// Small dot + text, no filled backgrounds.
 
 type PillTone = "neutral" | "success" | "warning" | "danger" | "info";
 const PILL_DOT: Record<PillTone, string> = {

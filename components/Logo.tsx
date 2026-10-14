@@ -1,62 +1,33 @@
-import Image from "next/image";
+import Link from "next/link";
 
-export const BRAND_NAME = "Clear Path Overdrive Nav";
-export const BRAND_TAGLINE = "Powered by Gorilla Safety";
+export const BRAND_NAME = "LogisticMind";
+export const BRAND_TAGLINE = "AI dispatcher copilot for Australian road freight";
 
-const LOGO_SRC = "/brand/logo.png";
-const LOGO_W = 720;
-const LOGO_H = 262;
-
-export function Logo({
-  height = 32,
-  className = "",
-  onDark = false,
-}: {
-  height?: number;
-  className?: string;
-  onDark?: boolean;
-}) {
-  const w = Math.round(height * (LOGO_W / LOGO_H));
-  const img = (
-    <Image
-      src={LOGO_SRC}
-      alt={BRAND_NAME}
-      width={w}
-      height={height}
-      priority
-      className={onDark ? "" : className}
-    />
-  );
-  // The Gorilla Safety wordmark is dark-ink on transparent. On dark surfaces
-  // it disappears, so wrap it in a white pill with a little padding.
-  if (onDark) {
-    return (
+export function Logo({ dark = false, href = "/" }: { dark?: boolean; href?: string }) {
+  return (
+    <Link href={href} className="flex items-center gap-2 select-none" aria-label={BRAND_NAME}>
       <span
-        className={`inline-flex items-center rounded-lg bg-white px-3 py-1.5 shadow-sm ${className}`}
+        className={`inline-flex h-7 w-7 items-center justify-center rounded-md text-xs font-bold ${
+          dark ? "bg-white text-ink-900" : "bg-ink-900 text-white"
+        }`}
       >
-        {img}
+        LM
       </span>
-    );
-  }
-  return img;
+      <span className={`text-base font-semibold tracking-tight ${dark ? "text-white" : "text-ink-900"}`}>
+        {BRAND_NAME}
+      </span>
+    </Link>
+  );
 }
 
-export function Wordmark({
-  className = "",
-  height = 36,
-  onDark = false,
-}: {
-  className?: string;
-  height?: number;
-  onDark?: boolean;
-}) {
+export default Logo;
+
+/** Inline wordmark (no link) for nav bars and footers. */
+export function Wordmark({ className = "", onDark = false }: { className?: string; onDark?: boolean }) {
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
-      <Logo height={height} onDark={onDark} />
-      <span className="hidden h-6 w-px bg-current opacity-20 sm:block" />
-      <span className="hidden text-[13px] font-semibold uppercase tracking-widest opacity-70 sm:inline">
-        Overdrive Nav
-      </span>
-    </div>
+    <span className={`inline-flex items-center gap-2 ${className}`}>
+      <span className={`inline-flex h-6 w-6 items-center justify-center rounded-md text-[10px] font-bold ${onDark ? "bg-white text-ink-900" : "bg-ink-900 text-white"}`}>LM</span>
+      <span className={`text-[15px] font-semibold tracking-tight ${onDark ? "text-white" : ""}`}>{BRAND_NAME}</span>
+    </span>
   );
 }

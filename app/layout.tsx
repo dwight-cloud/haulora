@@ -9,10 +9,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Clear Path Overdrive Nav — Truck-smart routes. Fleet-wide control.",
+  title: "LogisticMind — AI dispatcher copilot for Australian road freight",
   description:
-    "Commercial-legal truck navigation, dispatcher dashboard, and driver app for fleets of every size. Powered by Gorilla Safety.",
-  icons: { icon: "/brand/logo.png" },
+    "Agentic fuel, disruption and capacity decisions for small and mid-size Australian road freight operators.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

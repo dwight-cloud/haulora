@@ -6,10 +6,10 @@ services:
       HERE_API_KEY: ${HERE_API_KEY}
       NEXT_PUBLIC_HERE_API_KEY: ${NEXT_PUBLIC_HERE_API_KEY}
       AUTH_SECRET: ${AUTH_SECRET}
-      DB_PATH: /app/data/overdrive.db
+      DB_PATH: /app/data/logisticmind.db
     volumes:
-      - overdrive_data:/app/data
+      - logisticmind_data:/app/data
     ports:
       - "80:3000"
 volumes:
-  overdrive_data:
+  logisticmind_data:

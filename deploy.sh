@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Usage: ./deploy.sh user@your-vps /opt/overdrive
+# Usage: ./deploy.sh user@your-vps /opt/logisticmind
 HOST="${1:?ssh target required (e.g. root@1.2.3.4)}"
-REMOTE_DIR="${2:-/opt/overdrive}"
+REMOTE_DIR="${2:-/opt/logisticmind}"
 
 echo "→ Syncing source to $HOST:$REMOTE_DIR"
 rsync -az --delete \
