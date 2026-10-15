@@ -2,8 +2,9 @@ import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { Card, CardBody, CardHeader, CardTitle, Eyebrow, Pill } from "@/components/ui/primitives";
 import { BRAND_TAGLINE } from "@/components/Logo";
+import { Term } from "@/components/Term";
 
-export const metadata = { title: "How it works — Haulio" };
+export const metadata = { title: "How it works — Haulora" };
 
 export default function AboutPage() {
   return (
@@ -11,11 +12,11 @@ export default function AboutPage() {
       <Nav />
       <main className="mx-auto max-w-5xl px-4 py-10 md:px-6 md:py-14">
         <Eyebrow>How it works · for engineers</Eyebrow>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-bitumen-900 md:text-4xl">{BRAND_TAGLINE}: agents propose, a dispatcher decides</h1>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-bitumen-900 md:text-4xl">{BRAND_TAGLINE}: the AI helpers suggest, you decide</h1>
         <p className="mt-3 max-w-3xl text-[15px] leading-7 text-bitumen-600">
-          Each agent watches one operational signal. When it fires, the agent reads the fleet's data through typed tools, works
-          the numbers with deterministic engines, and writes proposals to an approval queue. Nothing changes a rate card, a route
-          or a status until a human approves it, or the policy for low-risk notices does.
+          Each <Term t="agent" /> watches one thing that goes wrong. When it fires, the helper reads the fleet's data through typed tools, works
+          the numbers with fixed-rule calculators (deterministic engines), and writes <Term t="proposal">suggestions</Term> to a queue for you. Nothing changes <Term t="rate card" />, a route
+          or a job until a person accepts it, or the policy for low-risk notes does. This page is the engineer's view; the rest of the site keeps to plain words.
         </p>
 
         {/* Architecture */}
@@ -29,14 +30,14 @@ export default function AboutPage() {
 
         {/* Agents */}
         <section className="mt-10">
-          <h2 className="text-xl font-bold tracking-tight text-bitumen-900">The three agents</h2>
+          <h2 className="text-xl font-bold tracking-tight text-bitumen-900">The three AI helpers</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
-            <AgentBox name="Fuel agent" tone="success" status="Live" trigger="A new diesel price observation (ACCC weekly, a feed, or a scenario)."
-              body="Reads every customer contract, calls the levy engine per customer, and proposes a rate-card update with the notice drafted only when the implied levy moves at least 0.5 points. Fixed and uncontracted levies are flagged, not changed." />
-            <AgentBox name="Disruption agent" tone="success" status="Live" trigger="A new road or weather event of moderate severity or worse."
-              body="Finds in-flight loads whose route crosses the event, plans a truck-legal HERE detour around it, then decides per load: proceed, reroute, hold or escalate. Essential and perishable freight is never silently held." />
-            <AgentBox name="Capacity agent" tone="neutral" status="Phase 2, rules-only" trigger="A driver or truck becomes unavailable, or a load has no truck."
-              body="Lists uncovered loads and idle trucks, checks HVNL standard hours per candidate, and proposes the nearest legal reassignment or escalates. Designed in full; this POC runs the rules without a model." />
+            <AgentBox name="Fuel AI helper (fuel agent)" tone="success" status="Live" trigger="A new diesel price observation (ACCC weekly, a feed, or a scenario)."
+              body="Reads every customer contract, calls the fuel surcharge (levy) engine per customer, and proposes a price (rate-card) update with the notice drafted only when the implied surcharge moves at least 0.5 points. Fixed and uncontracted surcharges are flagged, not changed." />
+            <AgentBox name="Road AI helper (disruption agent)" tone="success" status="Live" trigger="A new road or weather event of moderate severity or worse."
+              body="Finds delivery jobs (loads) whose route crosses the event, plans a truck-legal detour around it with the routing service (HERE), then decides per job: proceed, new route, wait at the depot, or ask the dispatcher. Urgent and spoilable freight is never silently held." />
+            <AgentBox name="Driver-cover AI helper (capacity agent)" tone="neutral" status="Phase 2, rules-only" trigger="A driver or truck becomes unavailable, or a load has no truck."
+              body="Lists jobs with no driver and idle trucks, checks the driving-hours (HVNL fatigue) rules per candidate, and proposes the nearest legal reassignment or asks the dispatcher. Designed in full; this POC runs the rules without a model." />
           </div>
         </section>
 
@@ -48,11 +49,11 @@ export default function AboutPage() {
               <ul className="grid gap-x-8 gap-y-3 text-[14px] leading-6 text-bitumen-700 md:grid-cols-2">
                 <Rule t="Read or propose, never execute">Every tool is rated read or propose. The executor is the only code path that changes data, and it runs fixed logic per action kind.</Rule>
                 <Rule t="Pinned model, exact cost">One pinned model id per deployment. Tokens are priced per call from the usage report, so the cost meter is measured, not estimated.</Rule>
-                <Rule t="Hard caps in the runtime">A step cap, a per-run cost cap and a rolling 24-hour spend cap, all enforced in code and logged as guardrail steps when they trip.</Rule>
+                <Rule t="Hard caps in the runtime">A step cap, a per-run cost cap and a rolling 24-hour spend cap, all enforced in code and logged as safety-stop (guardrail) steps when they trip.</Rule>
                 <Rule t="Schema-checked arguments">Tool arguments are validated against the tool's JSON schema before the handler runs. A bad call is refused and the model is told why.</Rule>
                 <Rule t="Auto-execute only low risk">Customer notices and review flags execute at proposal time. Rate-card changes, re-routes, holds and reassignments wait for a dispatcher.</Rule>
-                <Rule t="Full trace, every run">Every system message, thought, tool call, result, guardrail and final summary is written to the database as it happens, and shown unedited in the UI.</Rule>
-                <Rule t="Evals on the decision rules">The disruption rules and the levy engine have fixed test cases; the evals page shows the latest pass rate, latency and cost per suite.</Rule>
+                <Rule t="Full trace, every run">Every system message, thought, tool call, result, guardrail and final summary is written to the database as it happens, and shown unedited behind "Details for engineers".</Rule>
+                <Rule t="Evals on the decision rules">The road-problem rules and the fuel surcharge engine have fixed test cases; the accuracy-tests (evals) page shows the latest pass rate, latency and cost per suite.</Rule>
                 <Rule t="Scripted fallback">With no API key, each agent runs a scripted plan over the same tools and data, so the UI, trace and approval flow behave identically.</Rule>
               </ul>
             </CardBody>
@@ -85,7 +86,7 @@ export default function AboutPage() {
           <h2 className="text-xl font-bold tracking-tight text-bitumen-900">Limitations</h2>
           <ul className="mt-4 list-disc space-y-2 pl-5 text-[14px] leading-6 text-bitumen-700">
             <li>Single operator, single SQLite file. No multi-tenant isolation beyond the account id on every row.</li>
-            <li>Truck positions are seeded and nudged by scenarios; there is no telematics or EWD feed, so fatigue hours are derived from truck status.</li>
+            <li>Truck positions are seeded and nudged by scenarios; there is no truck-tracking (telematics) or EWD feed, so driving hours are derived from truck status.</li>
             <li>Customer notices are logged, not sent. Approving a rate-card change updates the contract row; it does not touch an invoicing system.</li>
             <li>The capacity agent runs rules only. Trade-offs the rules cannot rank (customer priority, backhaul value, subcontractor cost) are the Phase 2 model's job.</li>
             <li>Evals cover decision rules and the levy engine with fixed cases; they do not yet score the quality of the model's prose summaries.</li>

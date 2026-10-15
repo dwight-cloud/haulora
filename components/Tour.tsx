@@ -10,21 +10,21 @@ import { Button } from "./ui/primitives";
  * the stop lives on another page the tour stores its position in
  * sessionStorage, navigates, and resumes once the target is on screen.
  * Completion is remembered in localStorage. Start it from anywhere with
- * `window.dispatchEvent(new CustomEvent("haulio:tour:start"))`.
+ * `window.dispatchEvent(new CustomEvent("haulora:tour:start"))`.
  */
 
 interface Stop { path: string; target: string; title: string; body: string }
 
 const STOPS: Stop[] = [
-  { path: "/dashboard", target: "overview-numbers", title: "Your numbers, right now", body: "Loads on the road, trucks moving, today's diesel price, road problems, and how many proposals are waiting for you. These refresh every few seconds." },
-  { path: "/dashboard", target: "scenarios", title: "Step 1: try something going wrong", body: "Each button is a safe, pretend shock to the business: a diesel spike, a highway flood, two sick drivers. Pressing one wakes the AI agent that handles it. 'Start again' puts everything back." },
-  { path: "/dashboard", target: "agent-story", title: "Step 2: watch the agent think", body: "Every line is one thing the agent did, in order: what it read, what it worked out, what it proposes. It can look and suggest, but it cannot change anything itself." },
-  { path: "/decisions", target: "decisions", title: "Decisions: you have the final say", body: "Every proposal lands here with the numbers and the customer notice already drafted. Approve applies it immediately; reject throws it away. Nothing happens until you press one." },
-  { path: "/customers", target: "levy-chips", title: "Customers: is the fuel levy up to date?", body: "Each card compares the levy you are charging with what the contract says it should be at today's diesel price. A red chip means money being left on the table; the fuel agent proposes the fix." },
+  { path: "/dashboard", target: "overview-numbers", title: "Your numbers, right now", body: "Delivery jobs on the road, trucks moving, today's diesel price, road problems, and how many suggestions are waiting for you. These refresh every few seconds." },
+  { path: "/dashboard", target: "scenarios", title: "Step 1: try something going wrong", body: "Each button is a safe, pretend shock to the business: a diesel spike, a highway flood, two sick drivers. Pressing one wakes the AI helper that handles it. 'Start again' puts everything back." },
+  { path: "/dashboard", target: "agent-story", title: "Step 2: watch the AI helper think", body: "Every line is one thing the AI helper did, in order: what it read, what it worked out, what it suggests. It can look and suggest, but it cannot change anything itself." },
+  { path: "/decisions", target: "decisions", title: "Your decisions: you have the final say", body: "Every suggestion lands here with the numbers and the customer notice already written. Accept puts it into effect straight away; decline throws it away. Nothing happens until you press one." },
+  { path: "/customers", target: "levy-chips", title: "Customers: is the fuel surcharge up to date?", body: "Each card compares the fuel surcharge you are charging with what the contract says it should be at today's diesel price. A red chip means money being left on the table; the fuel AI helper suggests the fix." },
 ];
 
-const DONE_KEY = "haulio.tour.done";
-const STEP_KEY = "haulio.tour.step";
+const DONE_KEY = "haulora.tour.done";
+const STEP_KEY = "haulora.tour.step";
 const PAD = 8;
 
 export function Tour() {
@@ -41,8 +41,8 @@ export function Tour() {
       if (s != null) { const n = Number(s); if (Number.isInteger(n) && STOPS[n]) setStep(n); }
     } catch { /* ignore */ }
     const onStart = () => { setStep(0); };
-    window.addEventListener("haulio:tour:start", onStart);
-    return () => window.removeEventListener("haulio:tour:start", onStart);
+    window.addEventListener("haulora:tour:start", onStart);
+    return () => window.removeEventListener("haulora:tour:start", onStart);
   }, []);
 
   const stop = step != null ? STOPS[step] : null;

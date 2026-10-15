@@ -1,5 +1,5 @@
 /**
- * Typed data access for the Haulio domain tables.
+ * Typed data access for the Haulora domain tables.
  *
  * Every function is tenant-scoped by accountId where the table carries one,
  * uses parameterised statements, and returns camelCase objects (see

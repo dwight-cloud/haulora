@@ -1,5 +1,5 @@
 /**
- * The Haulio helper: a read-only chat assistant that explains the system and
+ * The Haulora helper: a read-only chat assistant that explains the system and
  * what is happening in the user's fleet right now. It reuses the agent runtime
  * so it gets the same caps, trace and cost accounting, but it has no propose
  * tools at all. It can look; it cannot change anything.
@@ -28,34 +28,48 @@ db.exec(`
 `);
 
 export const STARTER_QUESTIONS = [
-  "What is Haulio and how would it help me?",
+  "What is Haulora and how would it help me?",
   "What should I click first?",
-  "What did the last agent run do, and why?",
+  "What did the AI helper just do, and why?",
   "What is waiting for my decision right now?",
-  "How does the fuel levy calculation work?",
-  "What happens when I approve something?",
+  "How does the fuel surcharge work?",
+  "What happens when I accept a suggestion?",
 ];
 
 const PAGE_GUIDE: Record<string, string> = {
-  "/dashboard": "Overview: today's fleet at a glance, what needs a decision, and the 'Try a scenario' buttons that wake an AI agent.",
-  "/fleet": "Fleet: every truck, where it is, who is driving, fuel level and hours left today.",
-  "/loads": "Loads: every consignment, its customer, status, due time and route on the map.",
-  "/customers": "Customers: contracts, base rate per km, the fuel levy clause and whether the levy applied is out of date.",
-  "/disruptions": "Disruptions: active road closures and weather, and which loads they touch.",
-  "/decisions": "Decisions: proposals from the AI agents waiting for approval. Approving applies the change; rejecting discards it.",
-  "/agents": "AI agents: the three helpers, what each watches, their rules, and the scenario buttons.",
-  "/evals": "Reports: how accurate the agents are on 100 test cases and what each run costs.",
+  "/dashboard": "Overview: today's trucks at a glance, what needs your decision, and the 'Try a scenario' buttons that wake an AI helper.",
+  "/fleet": "Trucks: every truck, where it is, who is driving, fuel level and hours left today.",
+  "/loads": "Delivery jobs: every job, its customer, status, due time and route on the map.",
+  "/customers": "Customers: their prices, their fuel surcharge terms, and whether the surcharge you charge is out of date.",
+  "/disruptions": "Road problems: closures, floods and bad weather, and which delivery jobs they affect.",
+  "/decisions": "Your decisions: suggestions from the AI helpers waiting for you. Accepting applies the change; declining discards it.",
+  "/agents": "AI helpers: the three helpers, what each watches, their rules, and the scenario buttons.",
+  "/evals": "Accuracy tests: how often the helpers get it right on 100 test cases, and what each check costs.",
   "/about": "How it works: the architecture, data sources and limits of this proof of concept.",
 };
 
-const SYSTEM = `You are the Haulio helper. Haulio is a fleet management system for small Australian road freight operators (5 to 50 trucks) with three AI agents inside it:
+const SYSTEM = `You are the Haulora helper. Haulora is a fleet management system for small Australian road freight operators (5 to 50 trucks) with three AI agents inside it:
 - Fuel agent: when the diesel price moves, works out what each customer's fuel levy should be under their contract and proposes rate-card updates with the customer notice drafted.
 - Disruption agent: when a road closes or weather hits, finds the loads affected, plans a truck-legal detour with HERE, and proposes reroute, hold, or escalation per load.
 - Capacity agent (Phase 2, rules only in this proof of concept): when a driver is unavailable, finds uncovered loads and proposes fatigue-legal reassignments.
 Agents never change anything themselves. They propose; the dispatcher approves on the Decisions page. Low-risk housekeeping (customer notices, review flags) is recorded automatically.
 This is a proof of concept: the fleet is seeded (8 trucks, 6 customers, 20 loads in Queensland), diesel prices come from 2026 ACCC reference points, closures are seeded or triggered by scenario buttons, HERE routing and Open-Meteo weather are live, and the model is real.
 
-Your job: explain the system, say what to click next, and describe what is happening in the fleet right now using the tools. Be concrete, short, and plain. Use Australian English and A$. Answer in at most 120 words unless asked for detail. When the user asks what to click, give a numbered path of two or three clicks with page names. Never claim an action was taken; you can only read. If asked something outside Haulio, say so briefly.`;
+Your job: explain the system, say what to click next, and describe what is happening in the fleet right now using the tools. Be concrete, short, and plain. Use Australian English and A$. Answer in at most 120 words unless asked for detail.
+
+Speak like a helpful colleague, never like a manual. Use these plain words and, the first time you use one, add the explanation in brackets:
+- "fuel surcharge" (the extra percentage added to a customer's bill when diesel goes up), never "levy"
+- "the customer's prices", never "rate card"
+- "delivery job", never "load" or "consignment"
+- "on the road", "booked", "running late", "waiting at the depot", "new route" for statuses
+- "needs your call" when the AI could not decide safely, never "escalate"
+- "suggestion" / "accept" / "decline", never "proposal" / "approve" / "reject"
+- "road problems" for closures, floods and bad weather, never "disruption"
+- "urgent goods" and "goods that spoil", never "essential" or "perishable"
+- "AI helper", "check", and "what the helper did", never "agent", "run" or "trace"
+- "cents a litre", never "c/L"
+- "driver cover" and "driving-hours rules", never "capacity" or "fatigue management"
+The page names are: Overview, Trucks, Delivery jobs, Customers, Road problems, Your decisions, AI helpers, Accuracy tests, How it works. When the user asks what to click, give a numbered path of two or three clicks with page names. Never claim an action was taken; you can only read. If asked something outside Haulora, say so briefly.`;
 
 type Tool = { def: ChatCompletionTool; run: (args: Record<string, unknown>, accountId: string) => unknown };
 
@@ -91,7 +105,7 @@ export async function askAssistant(args: { accountId: string; question: string; 
 
   if (isMockMode()) {
     const snap = tools[0].run({}, accountId) as { decisionsPending: number; diesel?: { dieselCpl: number } };
-    const answer = `Haulio is a fleet management system with three AI helpers: one for fuel levies, one for road disruptions, and one for driver cover. Right now diesel is ${snap.diesel?.dieselCpl ?? "?"} c/L and ${snap.decisionsPending} decision(s) are waiting for you. Try this: 1) Open AI agents, 2) press "Diesel jumps 40 c/L", 3) open Decisions and approve a levy change. (The helper is in offline mode; set an API key for live answers.)`;
+    const answer = `Haulora is a fleet management system with three AI helpers: one for fuel levies, one for road disruptions, and one for driver cover. Right now diesel is ${snap.diesel?.dieselCpl ?? "?"} c/L and ${snap.decisionsPending} decision(s) are waiting for you. Try this: 1) Open AI agents, 2) press "Diesel jumps 40 c/L", 3) open Decisions and approve a levy change. (The helper is in offline mode; set an API key for live answers.)`;
     return { answer, costUsd: 0, mock: true, suggestions };
   }
   if (spendLast24h() >= CAPS.dailySpendCapUsd) {

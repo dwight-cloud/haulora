@@ -8,34 +8,34 @@ import {
 import type { AgentRun, AgentStep, StepKind } from "@/lib/domain/types";
 import { fmtDuration, fmtInt, fmtTime, fmtUsd } from "@/lib/ui/format";
 import { Pill } from "@/components/ui/primitives";
+import { agentName, plainText, runStatus } from "@/lib/ui/plain";
 
 type Payload = Record<string, unknown>;
 const asObj = (p: unknown): Payload => (p && typeof p === "object" && !Array.isArray(p) ? (p as Payload) : {});
 
-const AGENT_LABEL: Record<string, string> = { fuel: "Fuel agent", disruption: "Disruption agent", capacity: "Capacity agent" };
 
 /** Plain-English verb for each tool, used in the one-line step summary. */
 const TOOL_VERB: Record<string, string> = {
   get_latest_diesel_price: "Checked the latest diesel price",
   get_price_history: "Pulled recent diesel prices",
   list_customer_contracts: "Read every customer contract",
-  compute_levy: "Called compute_levy",
+  compute_levy: "Worked out the fuel surcharge (compute_levy)",
   trip_fuel_cost: "Costed a trip's fuel",
-  propose_rate_card_update: "Proposed a rate-card update",
-  flag_for_review: "Flagged for review",
-  list_active_disruptions: "Listed active disruptions",
-  find_affected_loads: "Found loads crossing the event",
+  propose_rate_card_update: "Suggested a fuel surcharge change (rate card update)",
+  flag_for_review: "Asked for your call (flag for review)",
+  list_active_disruptions: "Listed current road problems (disruptions)",
+  find_affected_loads: "Found delivery jobs crossing the event",
   weather_along_route: "Sampled weather along the route",
-  plan_detour: "Planned a truck-legal detour",
-  propose_replan: "Proposed a re-route",
-  propose_hold: "Proposed a hold",
-  escalate: "Escalated to a human",
+  plan_detour: "Planned a new route around the problem (truck-legal detour)",
+  propose_replan: "Suggested a new route (re-route)",
+  propose_hold: "Suggested keeping the truck at the depot (hold)",
+  escalate: "Needs your call (escalated)",
   draft_customer_notice: "Drafted a customer notice",
-  list_fleet_availability: "Listed fleet availability",
-  list_uncovered_loads: "Listed uncovered loads",
-  fatigue_check: "Ran a fatigue check",
-  propose_reassignment: "Proposed a reassignment",
-  escalate_uncovered: "Escalated an uncovered load",
+  list_fleet_availability: "Listed driver cover (fleet availability)",
+  list_uncovered_loads: "Listed delivery jobs with no driver",
+  fatigue_check: "Checked the driving-hours rules (fatigue check)",
+  propose_reassignment: "Suggested a different truck (reassignment)",
+  escalate_uncovered: "Needs your call: a job with no driver (escalated)",
 };
 
 /**
@@ -92,19 +92,19 @@ export function AgentTrace({ run, steps, compact = false }: { run: AgentRun; ste
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <span className="inline-flex items-center gap-2 text-[15px] font-semibold text-bitumen-900">
             <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-rust-500 text-white"><Bot className="h-4 w-4" /></span>
-            {AGENT_LABEL[run.agent] ?? run.agent}
+            {agentName(run.agent, true)} <span className="font-normal text-bitumen-400">({run.agent} agent)</span>
           </span>
-          <Pill tone={statusTone} filled>{run.status.replace("_", " ")}</Pill>
-          <Pill tone={run.mock ? "neutral" : "accent"} filled>{run.mock ? "scripted plan" : "live model"}</Pill>
+          <Pill tone={statusTone} filled>{runStatus(run.status)}</Pill>
+          <Pill tone={run.mock ? "neutral" : "accent"} filled>{run.mock ? "fixed script (mock)" : "live AI (model)"}</Pill>
           <span className="font-mono text-[11px] text-bitumen-500">{run.model}</span>
         </div>
-        <div className="mt-1.5 truncate text-xs text-bitumen-500" title={run.trigger}>Trigger: {run.trigger}</div>
+        <div className="mt-1.5 truncate text-xs text-bitumen-500" title={run.trigger}>Started because (trigger): {plainText(run.trigger)}</div>
         <div className={`mt-3 grid gap-2 ${compact ? "grid-cols-3" : "grid-cols-3 md:grid-cols-5"}`}>
-          <Meta label="Tool calls" value={fmtInt(toolCalls)} />
+          <Meta label="Steps (tool calls)" value={fmtInt(toolCalls)} />
           <Meta label="Tokens in" value={fmtInt(run.inputTokens)} />
           <Meta label="Tokens out" value={fmtInt(run.outputTokens)} />
-          <Meta label="Cost" value={fmtUsd(run.costUsd)} />
-          <Meta label="Duration" value={fmtDuration(duration)} />
+          <Meta label="Cost of this check" value={fmtUsd(run.costUsd)} />
+          <Meta label="Took" value={fmtDuration(duration)} />
         </div>
       </div>
 
@@ -114,11 +114,11 @@ export function AgentTrace({ run, steps, compact = false }: { run: AgentRun; ste
         {run.status === "running" && (
           <li className="relative py-2">
             <Dot className="bg-rust-500 animate-pulse" />
-            <div className="text-xs text-bitumen-500">Agent is working…</div>
+            <div className="text-xs text-bitumen-500">The AI helper is working…</div>
           </li>
         )}
         {steps.length === 0 && run.status !== "running" && (
-          <li className="py-2 text-xs text-bitumen-500">No steps recorded.</li>
+          <li className="py-2 text-xs text-bitumen-500">No steps were recorded.</li>
         )}
       </ol>
     </div>
@@ -143,12 +143,12 @@ function Dot({ className = "", children }: { className?: string; children?: Reac
 }
 
 const KIND_STYLE: Record<StepKind, { dot: string; icon: React.ReactNode; label: string }> = {
-  system:      { dot: "bg-bitumen-300 text-white",      icon: <Cpu />,          label: "System" },
-  thought:     { dot: "bg-bitumen-100 text-bitumen-500", icon: <Lightbulb />,   label: "Thought" },
-  tool_call:   { dot: "bg-bitumen-900 text-white",      icon: <Wrench />,       label: "Tool call" },
-  tool_result: { dot: "bg-white text-bitumen-600 border border-bitumen-300", icon: <Eye />, label: "Result" },
-  guardrail:   { dot: "bg-status-held text-white",      icon: <ShieldAlert />,  label: "Guardrail" },
-  proposal:    { dot: "bg-rust-500 text-white",         icon: <Send />,         label: "Proposal" },
+  system:      { dot: "bg-bitumen-300 text-white",      icon: <Cpu />,          label: "Set-up (system)" },
+  thought:     { dot: "bg-bitumen-100 text-bitumen-500", icon: <Lightbulb />,   label: "Thinking (thought)" },
+  tool_call:   { dot: "bg-bitumen-900 text-white",      icon: <Wrench />,       label: "Step (tool call)" },
+  tool_result: { dot: "bg-white text-bitumen-600 border border-bitumen-300", icon: <Eye />, label: "What came back (result)" },
+  guardrail:   { dot: "bg-status-held text-white",      icon: <ShieldAlert />,  label: "Safety stop (guardrail)" },
+  proposal:    { dot: "bg-rust-500 text-white",         icon: <Send />,         label: "Suggestion (proposal)" },
   final:       { dot: "bg-gum-500 text-white",          icon: <CheckCircle2 />, label: "Summary" },
   error:       { dot: "bg-red-500 text-white",          icon: <XCircle />,      label: "Error" },
 };
@@ -186,10 +186,10 @@ function SystemStep({ name, p }: { name: string | null; p: Payload }) {
   const caps = asObj(p.caps);
   return (
     <div className="text-[13px] text-bitumen-500">
-      <span className="font-medium text-bitumen-700">Run {name ?? "started"}</span>
-      {p.model ? <> · model <span className="font-mono">{String(p.model)}</span></> : null}
-      {p.mock != null ? <> · {p.mock ? "scripted plan" : "live model"}</> : null}
-      {caps.maxSteps != null ? <> · caps {String(caps.maxSteps)} steps, {fmtUsd(Number(caps.maxCost), 2)} per run, {fmtUsd(Number(caps.daily), 2)} per 24 h</> : null}
+      <span className="font-medium text-bitumen-700">Check {name ?? "started"}</span>
+      {p.model ? <> · the AI (model) <span className="font-mono">{String(p.model)}</span></> : null}
+      {p.mock != null ? <> · {p.mock ? "fixed script (mock)" : "live AI"}</> : null}
+      {caps.maxSteps != null ? <> · safety limits (caps): {String(caps.maxSteps)} steps, {fmtUsd(Number(caps.maxCost), 2)} per run, {fmtUsd(Number(caps.daily), 2)} per 24 h</> : null}
     </div>
   );
 }
@@ -222,7 +222,7 @@ function ToolCall({ name, p, names, compact }: { name: string | null; p: Payload
     <div>
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-[13px] font-medium text-bitumen-900">{callSummary(name, args, names)}</span>
-        <Pill tone={risk === "propose" ? "accent" : "neutral"}>{risk}</Pill>
+        <Pill tone={risk === "propose" ? "accent" : "neutral"}>{risk === "propose" ? "suggests only (propose)" : "looks only (read)"}</Pill>
       </div>
       <Disclosure json={JSON.stringify({ tool: name, args }, null, 2)} compact={compact} />
     </div>
@@ -268,19 +268,19 @@ function summarise(v: unknown): string {
 function Guardrail({ name, p }: { name: string | null; p: Payload }) {
   const reason = (() => {
     switch (name) {
-      case "daily_cap": return `The 24-hour spend cap was reached: ${fmtUsd(Number(p.spentUsd), 2)} spent against a ${fmtUsd(Number(p.capUsd), 2)} cap, so the run was refused.`;
-      case "run_cost_cap": return `This run hit its cost cap: ${fmtUsd(Number(p.costUsd))} against ${fmtUsd(Number(p.capUsd), 2)}, so the loop stopped.`;
-      case "step_cap": return `The step cap of ${String(p.maxSteps)} was reached, so the loop stopped.`;
-      case "unknown_tool": return `The model asked for a tool that does not exist (${String(p.name)}), so the call was refused.`;
-      case "invalid_arguments": return `The arguments for ${String(p.tool)} failed schema validation (${String(p.problem)}). The model was told why and asked again.`;
-      case "bad_json": return `The model returned malformed JSON arguments for ${String(p.tool)}, so the call was refused.`;
+      case "daily_cap": return `The daily spending limit (24-hour cap) was reached: ${fmtUsd(Number(p.spentUsd), 2)} spent against a ${fmtUsd(Number(p.capUsd), 2)} limit, so the check was refused.`;
+      case "run_cost_cap": return `This check hit its spending limit (run cost cap): ${fmtUsd(Number(p.costUsd))} against ${fmtUsd(Number(p.capUsd), 2)}, so it stopped.`;
+      case "step_cap": return `The limit of ${String(p.maxSteps)} steps (step cap) was reached, so the check stopped.`;
+      case "unknown_tool": return `The AI asked for a step that does not exist (${String(p.name)}), so it was refused.`;
+      case "invalid_arguments": return `The AI filled in the step ${String(p.tool)} wrongly (${String(p.problem)}). It was told why and asked again.`;
+      case "bad_json": return `The AI answered in a format the software could not read (malformed JSON) for ${String(p.tool)}, so the step was refused.`;
       default: return JSON.stringify(p);
     }
   })();
   return (
     <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-      <div><span className="font-semibold">Guardrail: {name?.replace(/_/g, " ")}.</span> {reason}</div>
+      <div><span className="font-semibold">Safety stop (guardrail: {name?.replace(/_/g, " ")}).</span> {reason}</div>
     </div>
   );
 }
@@ -290,7 +290,7 @@ function FinalStep({ text }: { text: string }) {
   return (
     <div className="rounded-xl border border-gum-200 bg-gum-50 px-4 py-3 text-[13px] leading-6 text-gum-900">
       <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-gum-700">
-        <FileText className="h-3.5 w-3.5" /> Summary for the dispatcher
+        <FileText className="h-3.5 w-3.5" /> Summary for you
       </div>
       {paras.map((p, i) => <p key={i} className={i > 0 ? "mt-2" : ""}>{p}</p>)}
     </div>

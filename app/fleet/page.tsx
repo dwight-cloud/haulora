@@ -2,7 +2,7 @@ import { Nav } from "@/components/Nav";
 import { FleetClient } from "./FleetClient";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Fleet — Haulio" };
+export const metadata = { title: "Trucks — Haulora" };
 
 export default function FleetPage() {
   return (

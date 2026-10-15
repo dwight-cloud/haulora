@@ -2,7 +2,7 @@ import { Nav } from "@/components/Nav";
 import { LoadsClient } from "./LoadsClient";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Loads — Haulio" };
+export const metadata = { title: "Delivery jobs — Haulora" };
 
 export default function LoadsPage() {
   return (

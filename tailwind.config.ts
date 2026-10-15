@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 /**
- * Haulio brand tokens.
+ * Haulora brand tokens.
  *   bitumen  warm, near-black neutral for text, dark surfaces and the grey scale
  *   rust     the single dominant accent (CTAs, the mark, active states)
  *   gum      supporting teal-green for success and "live"

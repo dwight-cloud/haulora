@@ -7,6 +7,7 @@ import { Button, Card, CardBody, CardHeader, CardTitle, ErrorBanner, PageHeader,
 import type { Load, Truck } from "@/lib/domain/types";
 import { api, ApiError, fmtDateTime } from "@/lib/ui/format";
 import { IN_FLIGHT, TRUCK_STATUS_LABEL, TRUCK_STATUS_TONE, hoursLeftToday, nearestPlace, shortPlace, truckType } from "@/lib/ui/fleet";
+import { Term } from "@/components/Term";
 
 const POLL_MS = 15000;
 
@@ -34,21 +35,21 @@ export function FleetClient({ apiKey }: { apiKey: string }) {
   return (
     <div className="space-y-5">
       <PageHeader
-        eyebrow="Fleet management"
-        title="Fleet"
-        subtitle="Every truck, where it is right now, who is driving and how much of the day they have left."
+        eyebrow="Your fleet"
+        title="Trucks"
+        subtitle="Every truck, where it is right now, who is driving and how many driving hours they have left today."
         right={<>{updated && <span className="hidden text-xs text-bitumen-400 md:inline">Updated {fmtDateTime(updated)}</span>}<Button size="sm" icon={<RefreshCw />} onClick={refresh}>Refresh</Button></>}
       />
       <p className="text-[13px] leading-6 text-bitumen-500">
-        <span className="font-semibold text-bitumen-700">Why this matters:</span> the capacity agent uses exactly this list (status, position, hours left) when it works out who can legally cover a load.
+        <span className="font-semibold text-bitumen-700">Why this matters:</span> the <Term t="capacity">driver-cover AI helper</Term> uses exactly this list (status, position, hours left) when it works out who can legally take a <Term t="load" />.
       </p>
       {error && <ErrorBanner>{error}</ErrorBanner>}
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <Card className="overflow-hidden">
           <CardHeader>
-            <CardTitle>{trucks ? `${list.length} trucks · ${moving} moving · ${idle} at depot` : "Loading…"}</CardTitle>
-            <span className="text-[11px] text-bitumen-400">Positions from the last telemetry ping</span>
+            <CardTitle>{trucks ? `${list.length} trucks · ${moving} on the road · ${idle} at the depot` : "Loading…"}</CardTitle>
+            <span className="text-[11px] text-bitumen-400">Positions from the last <Term t="telematics">truck tracking</Term> update</span>
           </CardHeader>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-[13px]">
@@ -57,10 +58,10 @@ export function FleetClient({ apiKey }: { apiKey: string }) {
                   <th className="px-4 py-2 font-semibold">Truck</th>
                   <th className="px-4 py-2 font-semibold">Driver</th>
                   <th className="px-4 py-2 font-semibold">Status</th>
-                  <th className="px-4 py-2 font-semibold">Position</th>
+                  <th className="px-4 py-2 font-semibold">Where it is</th>
                   <th className="px-4 py-2 font-semibold">Carrying</th>
                   <th className="px-4 py-2 text-right font-semibold">Fuel</th>
-                  <th className="px-4 py-2 text-right font-semibold">Hours left today</th>
+                  <th className="px-4 py-2 text-right font-semibold">Driving hours left today</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-bitumen-100">
@@ -93,12 +94,12 @@ export function FleetClient({ apiKey }: { apiKey: string }) {
             </table>
           </div>
           <p className="border-t border-bitumen-100 px-4 py-2 text-[11px] leading-5 text-bitumen-400">
-            Hours left follow the standard solo-driver rule the capacity agent applies: a truck already moving has about 4 h left in its shift, a rested truck at the depot has 12 h, off-duty drivers have none. Position is the distance to the nearest pickup or delivery point.
+            Hours left follow the standard <Term t="fatigue rules" /> for a solo driver, the same rule the driver-cover AI helper uses: a truck already on the road has about 4 hours left in its shift, a rested truck at the depot has 12, off-duty drivers have none. "Where it is" is the distance to the nearest pickup or delivery point.
           </p>
         </Card>
 
         <Card className="overflow-hidden">
-          <CardHeader className="py-3"><CardTitle>Where the fleet is</CardTitle><span className="text-[11px] text-bitumen-400">Queensland</span></CardHeader>
+          <CardHeader className="py-3"><CardTitle>Where your trucks are</CardTitle><span className="text-[11px] text-bitumen-400">Queensland</span></CardHeader>
           <div className="p-1.5">
             {apiKey ? (
               <HereMap apiKey={apiKey} center={{ lat: -23.5, lon: 148 }} zoom={5} height="420px" markers={markers} markerStyle="label" minimal />

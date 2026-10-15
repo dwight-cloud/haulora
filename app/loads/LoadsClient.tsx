@@ -7,12 +7,13 @@ import { Button, Card, CardBody, CardHeader, CardTitle, EmptyState, ErrorBanner,
 import type { Customer, Load, LoadStatus, Truck } from "@/lib/domain/types";
 import { api, ApiError, fmtAud, fmtDateTime } from "@/lib/ui/format";
 import { IN_FLIGHT, LOAD_STATUS_COLOUR, LOAD_STATUS_LABEL, LOAD_STATUS_TONE, shortPlace } from "@/lib/ui/fleet";
+import { Term } from "@/components/Term";
 
 const POLL_MS = 15000;
 type Filter = "all" | "in_flight" | LoadStatus;
 const FILTERS: Array<{ id: Filter; label: string }> = [
-  { id: "in_flight", label: "On the road" }, { id: "all", label: "All" }, { id: "planned", label: "Planned" }, { id: "en_route", label: "En route" },
-  { id: "delayed", label: "Delayed" }, { id: "rerouted", label: "Rerouted" }, { id: "held", label: "Held" }, { id: "delivered", label: "Delivered" },
+  { id: "in_flight", label: "Not delivered yet" }, { id: "all", label: "All" }, { id: "planned", label: LOAD_STATUS_LABEL.planned }, { id: "en_route", label: LOAD_STATUS_LABEL.en_route },
+  { id: "delayed", label: LOAD_STATUS_LABEL.delayed }, { id: "rerouted", label: LOAD_STATUS_LABEL.rerouted }, { id: "held", label: LOAD_STATUS_LABEL.held }, { id: "delivered", label: LOAD_STATUS_LABEL.delivered },
 ];
 
 export function LoadsClient({ apiKey }: { apiKey: string }) {
@@ -49,13 +50,13 @@ export function LoadsClient({ apiKey }: { apiKey: string }) {
 
   return (
     <div className="space-y-5">
-      <PageHeader eyebrow="Fleet management" title="Loads" subtitle="Every consignment you are carrying: who it is for, where it is going, when it is due and whether it is on track." right={<Button size="sm" icon={<RefreshCw />} onClick={refresh}>Refresh</Button>} />
+      <PageHeader eyebrow="Your fleet" title="Delivery jobs" subtitle="Every pickup and delivery you are carrying: who it is for, where it is going, when it is due and whether it is on track." right={<Button size="sm" icon={<RefreshCw />} onClick={refresh}>Refresh</Button>} />
       <p className="text-[13px] leading-6 text-bitumen-500">
-        <span className="font-semibold text-bitumen-700">Why this matters:</span> when a road closes, the disruption agent checks each of these routes and proposes a detour, a hold or a phone call per load. Click a row to see its route.
+        <span className="font-semibold text-bitumen-700">Why this matters:</span> when a road closes, the road AI helper checks each of these routes and suggests a <Term t="reroute" />, a <Term t="hold" /> or a phone call for each job. Click a row to see its route.
       </p>
       {error && <ErrorBanner>{error}</ErrorBanner>}
 
-      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Filter loads by status">
+      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Show delivery jobs by status">
         {FILTERS.map((f) => (
           <button key={f.id} type="button" role="tab" aria-selected={filter === f.id} onClick={() => setFilter(f.id)}
             className={cx("inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border px-3 text-[13px] font-semibold transition", filter === f.id ? "border-bitumen-900 bg-bitumen-900 text-white" : "border-bitumen-200 bg-white text-bitumen-600 hover:bg-bitumen-50")}>
@@ -69,14 +70,14 @@ export function LoadsClient({ apiKey }: { apiKey: string }) {
           <table className="w-full min-w-[860px] text-[13px]">
             <thead className="bg-bitumen-50 text-left text-[11px] uppercase tracking-[0.1em] text-bitumen-500">
               <tr>
-                <th className="px-4 py-2 font-semibold">Ref</th>
+                <th className="px-4 py-2 font-semibold">Job</th>
                 <th className="px-4 py-2 font-semibold">Customer</th>
                 <th className="px-4 py-2 font-semibold">From → To</th>
                 <th className="px-4 py-2 font-semibold">Status</th>
                 <th className="px-4 py-2 font-semibold">Due</th>
                 <th className="px-4 py-2 text-right font-semibold">Tonnes</th>
-                <th className="px-4 py-2 text-right font-semibold">Value</th>
-                <th className="px-4 py-2 font-semibold">Flags</th>
+                <th className="px-4 py-2 text-right font-semibold">Worth</th>
+                <th className="px-4 py-2 font-semibold">Special</th>
                 <th className="px-4 py-2 font-semibold">Truck</th>
               </tr>
             </thead>
@@ -95,19 +96,19 @@ export function LoadsClient({ apiKey }: { apiKey: string }) {
                   <td className="whitespace-nowrap px-4 py-2.5 text-bitumen-700">{fmtDateTime(l.dueAt)}</td>
                   <td className="px-4 py-2.5 text-right tabular-nums text-bitumen-800">{l.tonnes.toFixed(1)}</td>
                   <td className="px-4 py-2.5 text-right tabular-nums text-bitumen-800">{fmtAud(l.valueAud)}</td>
-                  <td className="px-4 py-2.5"><div className="flex gap-1">{l.essential && <Pill tone="accent">Essential</Pill>}{l.perishable && <Pill tone="warning">Perishable</Pill>}</div></td>
+                  <td className="px-4 py-2.5"><div className="flex gap-1">{l.essential && <Pill tone="accent"><Term t="essential" /></Pill>}{l.perishable && <Pill tone="warning"><Term t="perishable" /></Pill>}</div></td>
                   <td className="px-4 py-2.5 font-mono text-bitumen-700">{truckCode(l.truckId)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        {loads !== null && visible.length === 0 && <EmptyState title="No loads match this filter" body="Try 'All' to see everything, including delivered loads." />}
+        {loads !== null && visible.length === 0 && <EmptyState title="No delivery jobs match" body="Try 'All' to see everything, including delivered jobs." />}
       </Card>
 
       {/* Side panel */}
       {sel && (
-        <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label={`Load ${sel.ref}`}>
+        <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label={`Delivery job ${sel.ref}`}>
           <button type="button" aria-label="Close" className="absolute inset-0 bg-bitumen-900/40" onClick={() => setSelected(null)} />
           <div className="relative flex h-full w-full max-w-[520px] flex-col overflow-y-auto bg-white shadow-card-lg animate-fade-up">
             <div className="flex items-start justify-between gap-3 border-b border-bitumen-100 px-5 py-4">
@@ -122,7 +123,7 @@ export function LoadsClient({ apiKey }: { apiKey: string }) {
                 <HereMap apiKey={apiKey} height="300px" polyline={sel.currentPolyline ?? sel.plannedPolyline ?? undefined}
                   markers={[{ id: "o", lat: sel.originLat, lon: sel.originLon, label: "Pickup" }, { id: "d", lat: sel.destLat, lon: sel.destLon, label: "Delivery" }]} markerStyle="label" minimal />
               ) : (
-                <div className="flex h-[300px] items-center justify-center rounded-xl bg-bitumen-50 px-6 text-center text-sm text-bitumen-500">{apiKey ? "No route has been planned for this load yet." : "Map key not configured."}</div>
+                <div className="flex h-[300px] items-center justify-center rounded-xl bg-bitumen-50 px-6 text-center text-sm text-bitumen-500">{apiKey ? "No route has been planned for this job yet." : "Map key not configured."}</div>
               )}
             </div>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3 px-5 py-4 text-[13px]">
@@ -131,13 +132,13 @@ export function LoadsClient({ apiKey }: { apiKey: string }) {
               <Row k="Pickup">{shortPlace(sel.originLabel)}<div className="text-bitumen-500">{fmtDateTime(sel.pickupAt)}</div></Row>
               <Row k="Delivery">{shortPlace(sel.destLabel)}<div className="text-bitumen-500">due {fmtDateTime(sel.dueAt)}</div></Row>
               <Row k="Planned route">{sel.plannedKm ? `${Math.round(sel.plannedKm)} km · ${sel.plannedHours?.toFixed(1)} h` : "not planned"}</Row>
-              <Row k="Current route">{sel.currentKm ? `${Math.round(sel.currentKm)} km · ${sel.currentHours?.toFixed(1)} h` : "same as planned"}</Row>
-              <Row k="Cargo">{sel.tonnes.toFixed(1)} t · {fmtAud(sel.valueAud)}</Row>
-              <Row k="Flags">{sel.essential || sel.perishable ? [sel.essential && "Essential", sel.perishable && "Perishable"].filter(Boolean).join(", ") : "none"}</Row>
+              <Row k="Route now">{sel.currentKm ? `${Math.round(sel.currentKm)} km · ${sel.currentHours?.toFixed(1)} h` : "same as planned"}</Row>
+              <Row k="Goods">{sel.tonnes.toFixed(1)} t · {fmtAud(sel.valueAud)}</Row>
+              <Row k="Special">{sel.essential || sel.perishable ? [sel.essential && "Urgent goods", sel.perishable && "Goods that spoil"].filter(Boolean).join(", ") : "none"}</Row>
               {sel.replanReason && <div className="col-span-2 rounded-lg bg-bitumen-50 px-3 py-2"><dt className="text-[11px] uppercase tracking-[0.1em] text-bitumen-500">Why it changed</dt><dd className="mt-0.5 text-bitumen-800">{sel.replanReason}</dd></div>}
             </dl>
             <div className="mt-auto border-t border-bitumen-100 px-5 py-3 text-[12px] leading-5 text-bitumen-500">
-              Route colour on the map: <span className="inline-block h-1.5 w-4 rounded align-middle" style={{ background: LOAD_STATUS_COLOUR[sel.status] }} /> {LOAD_STATUS_LABEL[sel.status]}. Changes to this load are proposed by the agents and applied only after you approve them on Decisions.
+              Route colour on the map: <span className="inline-block h-1.5 w-4 rounded align-middle" style={{ background: LOAD_STATUS_COLOUR[sel.status] }} /> {LOAD_STATUS_LABEL[sel.status]}. Changes to this job are suggested by the AI helpers and made only after you accept them on Your decisions.
             </div>
           </div>
         </div>

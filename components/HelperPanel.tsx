@@ -5,7 +5,7 @@ import { Compass, Loader2, MessageCircle, Send, X } from "lucide-react";
 import { cx } from "./ui/primitives";
 
 /**
- * "Ask Haulio": a floating, read-only chat that explains the system and what
+ * "Ask Haulora": a floating, read-only chat that explains the system and what
  * is happening in the fleet. It talks to POST /api/assistant, which can look
  * but never change anything. Open state and the last 10 messages persist in
  * sessionStorage so the conversation survives page changes.
@@ -14,8 +14,8 @@ import { cx } from "./ui/primitives";
 type Msg = { role: "user" | "assistant"; content: string; costUsd?: number; error?: boolean };
 interface Reply { answer: string; costUsd: number; mock: boolean; suggestions: string[] }
 
-const STORE_OPEN = "haulio.helper.open";
-const STORE_MSGS = "haulio.helper.msgs";
+const STORE_OPEN = "haulora.helper.open";
+const STORE_MSGS = "haulora.helper.msgs";
 const MAX_STORED = 10;
 
 function load<T>(key: string, fallback: T): T {
@@ -50,8 +50,8 @@ export function HelperPanel() {
   // Other components can open the panel ("Ask the helper" buttons).
   useEffect(() => {
     const onOpen = () => setOpen(true);
-    window.addEventListener("haulio:helper:open", onOpen);
-    return () => window.removeEventListener("haulio:helper:open", onOpen);
+    window.addEventListener("haulora:helper:open", onOpen);
+    return () => window.removeEventListener("haulora:helper:open", onOpen);
   }, []);
 
   // Esc closes and returns focus to the launcher.
@@ -104,29 +104,28 @@ export function HelperPanel() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        aria-controls="haulio-helper"
+        aria-controls="haulora-helper"
         className={cx(
           "fixed bottom-20 right-4 z-[60] h-12 items-center gap-2 rounded-full bg-rust-500 pl-4 pr-5 text-sm font-semibold text-white shadow-glow transition hover:bg-rust-600 md:bottom-5 md:right-5",
           open ? "hidden md:inline-flex" : "inline-flex"
         )}
       >
-        <MessageCircle className="h-5 w-5" aria-hidden /> Ask Haulio
+        <MessageCircle className="h-5 w-5" aria-hidden /> Ask Haulora
       </button>
 
       {open && (
         <section
-          id="haulio-helper"
+          id="haulora-helper"
           role="dialog"
-          aria-label="Haulio helper"
+          aria-label="Haulora helper"
           className="fixed inset-0 z-[70] flex flex-col bg-white shadow-card-lg md:inset-auto md:bottom-20 md:right-5 md:h-[600px] md:max-h-[calc(100vh-6rem)] md:w-[380px] md:rounded-2xl md:border md:border-bitumen-200"
         >
           <header className="flex items-start justify-between gap-3 border-b border-bitumen-100 px-4 py-3">
             <div className="min-w-0">
-              <div className="text-[14px] font-bold text-bitumen-900">Haulio helper</div>
-              <div className="text-[11px] leading-4 text-bitumen-500">Explains the system, never changes anything</div>
+              <div className="text-[14px] font-bold text-bitumen-900">Haulora helper <span className="font-normal text-bitumen-400">·</span> <span className="text-[12px] font-medium text-bitumen-500">explains things, never changes anything</span></div>
             </div>
             <div className="flex items-center gap-1">
-              <button type="button" onClick={() => { setOpen(false); window.dispatchEvent(new CustomEvent("haulio:tour:start")); }} className="inline-flex h-9 items-center gap-1 rounded-md px-2 text-[12px] font-semibold text-bitumen-600 hover:bg-bitumen-50 hover:text-bitumen-900" title="Guided tour">
+              <button type="button" onClick={() => { setOpen(false); window.dispatchEvent(new CustomEvent("haulora:tour:start")); }} className="inline-flex h-9 items-center gap-1 rounded-md px-2 text-[12px] font-semibold text-bitumen-600 hover:bg-bitumen-50 hover:text-bitumen-900" title="Guided tour">
                 <Compass className="h-3.5 w-3.5" /> Show me around
               </button>
               <button type="button" onClick={() => { setOpen(false); buttonRef.current?.focus(); }} aria-label="Close helper" className="inline-flex h-9 w-9 items-center justify-center rounded-md text-bitumen-500 hover:bg-bitumen-50 hover:text-bitumen-900"><X className="h-4 w-4" /></button>
@@ -136,7 +135,7 @@ export function HelperPanel() {
           <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
             {msgs.length === 0 && (
               <div className="rounded-xl bg-bitumen-50 px-3 py-2.5 text-[13px] leading-5 text-bitumen-700">
-                Ask anything about Haulio: what a page is for, what the agents just did, or what to click next. I can read your fleet's data but I cannot change it.
+                Ask anything about Haulora: what a page is for, what the AI helpers just did, or what to click next. I can read your fleet's data but I cannot change it.
               </div>
             )}
             {msgs.map((m, i) => (
@@ -180,7 +179,7 @@ export function HelperPanel() {
               <button type="submit" disabled={busy || !input.trim()} aria-label="Send" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-rust-500 text-white transition hover:bg-rust-600 disabled:opacity-40"><Send className="h-4 w-4" /></button>
             </div>
             <div className="mt-1.5 flex items-center justify-between text-[10px] text-bitumen-400">
-              <span>Cost this chat: US${cost.toFixed(4)}</span>
+              <span title={`US$${cost.toFixed(4)} this chat`}>Reads your fleet, never changes it</span>
               {msgs.length > 0 && <button type="button" onClick={() => { setMsgs([]); setSuggestions([]); }} className="hover:text-bitumen-700">Clear</button>}
             </div>
           </form>

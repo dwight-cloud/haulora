@@ -9,9 +9,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Haulio — AI dispatch for trucking",
+  title: "Haulora — AI dispatch for trucking",
   description:
-    "Haulio is an AI dispatcher copilot for Australian road freight: fuel, disruption and capacity agents that propose, and a dispatcher who approves.",
+    "Haulora is an AI dispatcher copilot for Australian road freight: fuel, disruption and capacity agents that propose, and a dispatcher who approves.",
   icons: { icon: [{ url: "/favicon.svg", type: "image/svg+xml" }] },
 };
 

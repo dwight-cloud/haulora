@@ -2,7 +2,7 @@ import { Nav } from "@/components/Nav";
 import { ApprovalsClient } from "@/app/approvals/ApprovalsClient";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Decisions — Haulio" };
+export const metadata = { title: "Your decisions — Haulora" };
 
 export default function DecisionsPage() {
   return (

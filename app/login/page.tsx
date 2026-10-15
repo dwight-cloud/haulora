@@ -60,7 +60,7 @@ function LoginForm() {
           aria-hidden
         />
         <div className="relative flex h-full flex-col justify-between p-12">
-          <Link href="/" className="inline-flex rounded-md" aria-label="Haulio home"><Wordmark onDark /></Link>
+          <Link href="/" className="inline-flex rounded-md" aria-label="Haulora home"><Wordmark onDark /></Link>
 
           <div className="max-w-md">
             <Mark size={64} onDark />
@@ -68,14 +68,14 @@ function LoginForm() {
               {BRAND_TAGLINE}.
             </h2>
             <p className="mt-5 text-white/70">
-              A fuel agent, a disruption agent and a capacity agent watch the things that go wrong in road freight, work out the next move, and put it in front of you to approve.
+              Three AI helpers watch the things that go wrong in trucking: diesel prices, road closures and drivers calling in sick. They work out the next move and put it in front of you to say yes or no.
             </p>
             <ul className="mt-8 space-y-3 text-sm text-white/80">
               {[
-                "Real HERE truck routing and live weather",
-                "Every proposal costed in A$ before you decide",
-                "Nothing changes until a dispatcher approves",
-                "Every run traced, capped and priced",
+                "Real truck routes and live weather",
+                "Every suggestion costed in A$ before you decide",
+                "Nothing changes until you accept it",
+                "You can see every step the AI took",
               ].map((x) => (
                 <li key={x} className="flex items-center gap-2.5">
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rust-500 text-white">
@@ -87,20 +87,20 @@ function LoginForm() {
             </ul>
           </div>
 
-          <div className="text-xs text-white/50">© {new Date().getFullYear()} Haulio · Proof of concept</div>
+          <div className="text-xs text-white/50">© {new Date().getFullYear()} Haulora · Proof of concept</div>
         </div>
       </aside>
 
       {/* Right: form */}
       <section className="flex items-center justify-center px-4 py-12 md:px-6">
         <div className="w-full max-w-md">
-          <div className="lg:hidden"><Link href="/" className="inline-flex rounded-md" aria-label="Haulio home"><Wordmark /></Link><div className="mt-1 text-sm text-bitumen-500">{BRAND_TAGLINE}</div></div>
+          <div className="lg:hidden"><Link href="/" className="inline-flex rounded-md" aria-label="Haulora home"><Wordmark /></Link><div className="mt-1 text-sm text-bitumen-500">{BRAND_TAGLINE}</div></div>
 
           {/* Demo first */}
           <div className="mt-8 rounded-xl border border-rust-200 bg-rust-50/60 p-5">
             <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-rust-700">Fastest way in</div>
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-bitumen-900">Open the live demo</h1>
-            <p className="mt-1 text-sm leading-6 text-bitumen-600">One click signs you in as the dispatcher of a seeded Brisbane fleet. No account needed.</p>
+            <p className="mt-1 text-sm leading-6 text-bitumen-600">One click signs you in as the person running a made-up Brisbane fleet. No account needed.</p>
             <div className="mt-4"><DemoButton /></div>
           </div>
 
@@ -164,7 +164,7 @@ function LoginForm() {
 
           {mode === "login" && (
             <p className="mt-6 text-xs leading-5 text-bitumen-400">
-              Demo credentials, if you need them: dispatcher <button type="button" className="font-mono text-bitumen-600 underline-offset-2 hover:underline" onClick={() => { setEmail("dispatch@demo.local"); setPassword("dispatch123"); }}>dispatch@demo.local / dispatch123</button>,
+              Demo sign-ins, if you need them: fleet manager <button type="button" className="font-mono text-bitumen-600 underline-offset-2 hover:underline" onClick={() => { setEmail("dispatch@demo.local"); setPassword("dispatch123"); }}>dispatch@demo.local / dispatch123</button>,
               driver <button type="button" className="font-mono text-bitumen-600 underline-offset-2 hover:underline" onClick={() => { setEmail("driver@demo.local"); setPassword("driver123"); }}>driver@demo.local / driver123</button>.
             </p>
           )}

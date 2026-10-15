@@ -3,7 +3,7 @@ import type { Load, LoadStatus, Truck, TruckStatus } from "@/lib/domain/types";
 import type { PillTone } from "@/components/ui/primitives";
 
 export const LOAD_STATUS_LABEL: Record<LoadStatus, string> = {
-  en_route: "En route", planned: "Planned", rerouted: "Rerouted", held: "Held", delayed: "Delayed", delivered: "Delivered", cancelled: "Cancelled",
+  en_route: "On the road", planned: "Booked", rerouted: "New route", held: "Waiting at the depot", delayed: "Running late", delivered: "Delivered", cancelled: "Cancelled",
 };
 export const LOAD_STATUS_TONE: Record<LoadStatus, PillTone> = {
   en_route: "info", planned: "neutral", rerouted: "success", held: "warning", delayed: "danger", delivered: "neutral", cancelled: "neutral",
@@ -15,7 +15,7 @@ export const LOAD_STATUS_COLOUR: Record<LoadStatus, string> = {
 export const IN_FLIGHT: LoadStatus[] = ["planned", "en_route", "delayed", "rerouted", "held"];
 
 export const TRUCK_STATUS_LABEL: Record<TruckStatus, string> = {
-  moving: "Moving", idle: "At depot", off_duty: "Off duty", out_of_service: "Out of service",
+  moving: "On the road", idle: "At the depot", off_duty: "Driver off duty", out_of_service: "Off the road for repairs",
 };
 export const TRUCK_STATUS_TONE: Record<TruckStatus, PillTone> = {
   moving: "info", idle: "success", off_duty: "neutral", out_of_service: "danger",

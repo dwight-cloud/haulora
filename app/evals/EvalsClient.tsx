@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardBody, CardHeader, CardTitle, ErrorBanner, PageHeader, Pill, Stat } from "@/components/ui/primitives";
 import { api, ApiError, fmtDateTime, fmtDuration, fmtInt, fmtUsd } from "@/lib/ui/format";
+import { Term } from "@/components/Term";
 
 interface EvalCase { id?: string; name?: string; passed?: boolean; pass?: boolean; ok?: boolean; expected?: unknown; actual?: unknown; notes?: string; reason?: string; error?: string; [k: string]: unknown }
 interface Report { mode?: string; cases?: EvalCase[]; livePassed?: number | null; tokens?: { in: number; out: number } | null }
@@ -12,8 +13,8 @@ interface Stats { runs: number; totalCostUsd: number; totalTokens: number; model
 const casePassed = (c: EvalCase) => c.passed ?? c.pass ?? c.ok ?? false;
 const str = (v: unknown) => (v == null ? "—" : typeof v === "string" ? v : JSON.stringify(v));
 const SUITE_LABEL: Record<string, { title: string; what: string }> = {
-  fuel_levy: { title: "Fuel levy engine", what: "Given a contract and a diesel price, does the engine land on the right levy, threshold and risk tier?" },
-  disruption_triage: { title: "Disruption triage rules", what: "Given a load, an event and a detour, does the rule set choose proceed, reroute, hold or escalate correctly?" },
+  fuel_levy: { title: "Fuel surcharge sums (fuel levy engine)", what: "Given a contract and a diesel price, does the calculator land on the right surcharge, threshold and risk tier?" },
+  disruption_triage: { title: "Road problem rules (disruption triage)", what: "Given a delivery job, a road problem and a new route, does the rule set choose proceed, new route, wait or ask-you correctly?" },
 };
 
 export function EvalsClient() {
@@ -31,7 +32,7 @@ export function EvalsClient() {
 
   return (
     <div className="space-y-5">
-      <PageHeader eyebrow="For engineers" title="Evals & cost" subtitle="Fixed test cases for each agent's decision rules, and what every run costs" />
+      <PageHeader eyebrow="For engineers" title="Accuracy tests and cost" subtitle={<>Fixed test questions for each AI helper's decision rules (<Term t="evals" />), and <Term t="cost per run" />.</>} />
       {error && <ErrorBanner>{error}</ErrorBanner>}
 
       {/* Suites */}
@@ -39,7 +40,7 @@ export function EvalsClient() {
         <div className="grid gap-3 md:grid-cols-2">{[0, 1].map((i) => <div key={i} className="h-72 animate-pulse rounded-xl border border-bitumen-200 bg-bitumen-50" />)}</div>
       ) : suites.length === 0 ? (
         <Card><CardBody className="py-10 text-center text-sm text-bitumen-500">
-          No eval results yet. Run <code className="rounded bg-bitumen-100 px-1.5 py-0.5 font-mono text-[12px] text-bitumen-800">npm run eval</code> to populate.
+          No test results yet. Run <code className="rounded bg-bitumen-100 px-1.5 py-0.5 font-mono text-[12px] text-bitumen-800">npm run eval</code> to populate.
         </CardBody></Card>
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
@@ -49,16 +50,16 @@ export function EvalsClient() {
 
       {/* Cost per run */}
       <Card>
-        <CardHeader><CardTitle>Cost per run</CardTitle><span className="font-mono text-[11px] text-bitumen-400">{stats?.model}</span></CardHeader>
+        <CardHeader><CardTitle>What each check costs (cost per run)</CardTitle><span className="font-mono text-[11px] text-bitumen-400">{stats?.model}</span></CardHeader>
         <CardBody>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <Stat loading={!stats} label="Agent runs" value={stats ? fmtInt(stats.runs) : "—"} sub="all time" />
-            <Stat loading={!stats} label="Avg cost / run" value={avgCost != null ? fmtUsd(avgCost) : "—"} sub={stats ? `${fmtUsd(stats.totalCostUsd, 3)} total` : undefined} />
-            <Stat loading={!stats} label="Avg tokens / run" value={avgTokens != null ? fmtInt(Math.round(avgTokens)) : "—"} sub="in + out" />
+            <Stat loading={!stats} label="AI checks (runs)" value={stats ? fmtInt(stats.runs) : "—"} sub="all time" />
+            <Stat loading={!stats} label="Avg cost per check" value={avgCost != null ? fmtUsd(avgCost) : "—"} sub={stats ? `${fmtUsd(stats.totalCostUsd, 3)} total` : undefined} />
+            <Stat loading={!stats} label="Avg tokens per check" value={avgTokens != null ? fmtInt(Math.round(avgTokens)) : "—"} sub="in + out" />
             <Stat loading={!stats} label="24 h spend" value={stats ? fmtUsd(stats.spend24hUsd, 3) : "—"} sub={stats ? `cap ${fmtUsd(stats.caps.dailySpendCapUsd, 2)}` : undefined} tone={stats && stats.spend24hUsd > stats.caps.dailySpendCapUsd * 0.8 ? "warning" : "neutral"} />
           </div>
           <p className="mt-3 text-xs leading-5 text-bitumen-500">
-            Pricing assumption: US$0.25 in / US$2.00 out per million tokens for the pinned model; override via env. Tokens are priced per call from the model's usage report, so the meter is measured for live runs. Scripted runs cost nothing.
+            Pricing assumption: US$0.25 in / US$2.00 out per million tokens for the pinned model; override via env. Tokens are priced per call from the model's usage report, so the meter is measured for live checks. Scripted (mock) checks cost nothing.
           </p>
         </CardBody>
       </Card>
@@ -87,19 +88,19 @@ function SuiteCard({ s }: { s: Suite }) {
           <div className={`text-5xl font-extrabold tracking-tight tabular-nums ${rate === 100 ? "text-gum-600" : rate >= 80 ? "text-amber-700" : "text-red-700"}`}>{rate.toFixed(0)}%</div>
           <div className="pb-1.5">
             <div className="text-sm font-semibold text-bitumen-900">{s.passed} of {s.total} cases pass</div>
-            <div className="text-xs text-bitumen-500">deterministic engine</div>
+            <div className="text-xs text-bitumen-500">fixed-rule calculator (deterministic engine)</div>
           </div>
         </div>
 
         <div className="mt-4 space-y-2">
-          <Bar label="Engine" pct={rate} n={`${s.passed}/${s.total}`} colour="bg-gum-500" />
+          <Bar label="Calculator" pct={rate} n={`${s.passed}/${s.total}`} colour="bg-gum-500" />
           {liveRate != null
-            ? <Bar label="Model alone" pct={liveRate} n={`${live}/${s.total}`} colour="bg-rust-400" />
+            ? <Bar label="The AI alone" pct={liveRate} n={`${live}/${s.total}`} colour="bg-rust-400" />
             : <div className="text-[11px] text-bitumen-400">No model-alone comparison in this run (run <code className="font-mono">npm run eval:live</code>).</div>}
         </div>
         {liveRate != null && (
           <p className="mt-2 text-[12px] leading-5 text-bitumen-500">
-            The engine is the source of truth. The "model alone" bar is the pinned model answering the same cases without the tool, which is why the agents call the engine instead of estimating.
+            The calculator is the source of truth. "The AI alone" bar is the pinned model answering the same cases without the calculator, which is why the AI helpers call the calculator instead of guessing.
           </p>
         )}
 

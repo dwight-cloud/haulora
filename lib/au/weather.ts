@@ -4,7 +4,7 @@
  */
 import { decodeFlexiblePolyline } from "../polyline";
 
-const UA = "Haulio/0.1 (demo)";
+const UA = "Haulora/0.1 (demo)";
 const OPEN_METEO = "https://api.open-meteo.com/v1/forecast";
 
 export interface WeatherSample {

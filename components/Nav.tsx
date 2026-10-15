@@ -24,9 +24,9 @@ export async function Nav() {
     return (
       <header className="sticky top-0 z-40 border-b border-bitumen-200 bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2.5 md:px-6">
-          <Link href="/" className="rounded-md" aria-label="Haulio home"><Wordmark /></Link>
+          <Link href="/" className="rounded-md" aria-label="Haulora home"><Wordmark /></Link>
           <nav className="flex items-center gap-1 text-sm">
-            <TopLink href="/#agents" className="hidden sm:inline-flex">Agents</TopLink>
+            <TopLink href="/#agents" className="hidden sm:inline-flex">AI helpers</TopLink>
             <TopLink href="/about">How it works</TopLink>
             <Link
               href="/login"
@@ -57,21 +57,21 @@ export async function Nav() {
 
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-bitumen-200 bg-white md:flex">
         <div className="flex h-14 shrink-0 items-center border-b border-bitumen-100 px-5">
-          <Link href="/dashboard" className="rounded-md" aria-label="Haulio overview"><Wordmark /></Link>
+          <Link href="/dashboard" className="rounded-md" aria-label="Haulora overview"><Wordmark /></Link>
         </div>
 
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-4" aria-label="Main">
-          <SectionLabel>Fleet management</SectionLabel>
+          <SectionLabel>Your fleet</SectionLabel>
           <SideLink href="/dashboard"   icon={<LayoutGrid />}>Overview</SideLink>
-          <SideLink href="/fleet"       icon={<Truck />}>Fleet</SideLink>
-          <SideLink href="/loads"       icon={<Package />}>Loads</SideLink>
+          <SideLink href="/fleet"       icon={<Truck />}>Trucks</SideLink>
+          <SideLink href="/loads"       icon={<Package />}>Delivery jobs</SideLink>
           <SideLink href="/customers"   icon={<Building2 />}>Customers</SideLink>
-          <SideLink href="/disruptions" icon={<TriangleAlert />}>Disruptions</SideLink>
-          <SideLink href="/decisions"   icon={<CheckSquare />} badge={pending}>Decisions</SideLink>
-          <SideLink href="/agents"      icon={<Bot />}>AI agents</SideLink>
+          <SideLink href="/disruptions" icon={<TriangleAlert />}>Road problems</SideLink>
+          <SideLink href="/decisions"   icon={<CheckSquare />} badge={pending}>Your decisions</SideLink>
+          <SideLink href="/agents"      icon={<Bot />}>AI helpers</SideLink>
 
           <SectionLabel className="mt-5" small>For engineers</SectionLabel>
-          <SideLink href="/evals" icon={<FileBarChart />} small>Reports</SideLink>
+          <SideLink href="/evals" icon={<FileBarChart />} small>Accuracy tests</SideLink>
           <SideLink href="/about" icon={<BookOpen />} small>How it works</SideLink>
 
           <SectionLabel className="mt-5" small>Planning tools</SectionLabel>
@@ -97,7 +97,7 @@ export async function Nav() {
 
       {/* Mobile shell: top bar with brand, bottom tab bar with the main fleet pages. */}
       <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b border-bitumen-200 bg-white/90 px-4 backdrop-blur md:hidden">
-        <Link href="/dashboard" className="rounded-md" aria-label="Haulio overview"><Wordmark size="sm" /></Link>
+        <Link href="/dashboard" className="rounded-md" aria-label="Haulora overview"><Wordmark size="sm" /></Link>
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-rust-500 text-[10px] font-bold text-white">
             {initials(session.name)}
@@ -107,8 +107,8 @@ export async function Nav() {
       </header>
       <nav aria-label="Main pages" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-bitumen-200 bg-white/95 backdrop-blur md:hidden">
         <TabLink href="/dashboard" icon={<LayoutGrid />}>Overview</TabLink>
-        <TabLink href="/fleet" icon={<Truck />}>Fleet</TabLink>
-        <TabLink href="/loads" icon={<Package />}>Loads</TabLink>
+        <TabLink href="/fleet" icon={<Truck />}>Trucks</TabLink>
+        <TabLink href="/loads" icon={<Package />}>Jobs</TabLink>
         <TabLink href="/disruptions" icon={<TriangleAlert />}>Roads</TabLink>
         <TabLink href="/decisions" icon={<ClipboardList />} badge={pending}>Decisions</TabLink>
       </nav>

@@ -1,5 +1,5 @@
 /**
- * Haulio domain schema.
+ * Haulora domain schema.
  *
  * Everything the three agents read and write lives here. Units are metric and
  * currency is AUD unless a column says otherwise. All tables are tenant-scoped

@@ -2,7 +2,7 @@ import { Nav } from "@/components/Nav";
 import { CustomersClient } from "./CustomersClient";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Customers — Haulio" };
+export const metadata = { title: "Customers — Haulora" };
 
 export default function CustomersPage() {
   return (

@@ -4,12 +4,24 @@ import { useMemo, useState } from "react";
 import { AlertTriangle, ChevronDown, ChevronRight, Code2 } from "lucide-react";
 import type { AgentRun, AgentStep } from "@/lib/domain/types";
 import { fmtAud } from "@/lib/ui/format";
+import { agentName, plainText } from "@/lib/ui/plain";
 import { AgentTrace } from "./AgentTrace";
 
 type Payload = Record<string, unknown>;
 const asObj = (p: unknown): Payload => (p && typeof p === "object" && !Array.isArray(p) ? (p as Payload) : {});
 const num = (v: unknown, d = 1) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—");
-const AGENT_LABEL: Record<string, string> = { fuel: "fuel agent", disruption: "disruption agent", capacity: "capacity agent" };
+
+function guardrailWord(name: string | null): string {
+  switch (name) {
+    case "daily_cap": return "the daily spending limit was reached";
+    case "run_cost_cap": return "this check hit its spending limit";
+    case "step_cap": return "this check hit its limit on the number of steps";
+    case "unknown_tool": return "the AI asked for something it is not allowed to use";
+    case "invalid_arguments": return "the AI filled in a step wrongly and was told to try again";
+    case "bad_json": return "the AI answered in a format the software could not read";
+    default: return (name ?? "a limit").replace(/_/g, " ");
+  }
+}
 
 export interface StoryLine { text: string; tone: "normal" | "muted" | "propose" | "warn" | "error" | "final" }
 
@@ -38,7 +50,7 @@ export function buildNames(steps: AgentStep[]): Map<string, string> {
   return names;
 }
 
-/** One plain-English line per agent step. Tool calls are paired with their result. */
+/** One plain-English line per AI helper step. Tool calls are paired with their result. */
 export function storyLines(steps: AgentStep[]): StoryLine[] {
   const names = buildNames(steps);
   const nm = (id: unknown) => (typeof id === "string" ? names.get(id) ?? id : "—");
@@ -47,7 +59,7 @@ export function storyLines(steps: AgentStep[]): StoryLine[] {
     const s = steps[i]!;
     const p = asObj(s.payload);
     if (s.kind === "thought") { out.push({ text: String(p.text ?? ""), tone: "muted" }); continue; }
-    if (s.kind === "guardrail") { out.push({ text: `Stopped by a safety limit (${(s.name ?? "cap").replace(/_/g, " ")}). The agent is not allowed past this point.`, tone: "warn" }); continue; }
+    if (s.kind === "guardrail") { out.push({ text: `Safety stop: ${guardrailWord(s.name)}. The AI helper is not allowed past this point.`, tone: "warn" }); continue; }
     if (s.kind === "error") { out.push({ text: `Something went wrong: ${String(p.message ?? "")}`, tone: "error" }); continue; }
     if (s.kind === "final") { out.push({ text: String(p.text ?? "").split(/\n{2,}/)[0] ?? "", tone: "final" }); continue; }
     if (s.kind !== "tool_call") continue;
@@ -62,28 +74,31 @@ export function storyLines(steps: AgentStep[]): StoryLine[] {
     switch (s.name) {
       case "get_latest_diesel_price": {
         const latest = asObj(r.latest), prev = asObj(r.previous);
-        text = `Checked today's diesel price: ${num(latest.dieselCpl)} c/L` + (prev.dieselCpl != null ? ` (was ${num(prev.dieselCpl)} c/L)` : "");
+        text = `Checked today's diesel price: ${num(latest.dieselCpl)} cents a litre` + (prev.dieselCpl != null ? ` (was ${num(prev.dieselCpl)})` : "");
         break;
       }
       case "get_price_history": text = `Looked at the last ${arr?.length ?? "few"} diesel prices`; break;
       case "list_customer_contracts": text = `Read ${arr?.length ?? "the"} customer contracts`; break;
       case "compute_levy": {
         const who = typeof r.customer === "string" ? r.customer : nm(args.customerId);
-        if (err) { text = `Could not work out ${who}'s levy: ${err}`; break; }
+        if (err) { text = `Could not work out ${who}'s fuel surcharge: ${plainText(err)}`; break; }
         const cur = Number(r.currentLevyPct), imp = Number(r.impliedLevyPct);
         const dir = imp > cur ? "up" : imp < cur ? "down" : "unchanged";
-        text = `Worked out ${who}'s levy should be ${num(imp)}%` + (dir === "unchanged" ? ", the same as now" : `, ${dir} from ${num(cur)}%`);
-        if (r.exceedsThreshold === false) text += ". Too small a move to bother the customer";
-        else if (typeof r.weeklyRevenueDeltaAud === "number") text += `, worth ${fmtAud(r.weeklyRevenueDeltaAud, { sign: true })} a week`;
+        text = `Worked out ${who}'s fuel surcharge should be ${num(imp)}%` + (dir === "unchanged" ? ", the same as now" : `, ${dir} from ${num(cur)}%`);
+        if (r.exceedsThreshold === false) text += ". Too small a change to bother the customer";
+        else if (typeof r.weeklyRevenueDeltaAud === "number") {
+          const d = r.weeklyRevenueDeltaAud;
+          text += d > 0 ? `: about ${fmtAud(d)} a week you are currently not charging` : d < 0 ? `: about ${fmtAud(Math.abs(d))} a week you are over-charging` : "";
+        }
         break;
       }
       case "trip_fuel_cost": text = `Costed a trip's fuel: ${fmtAud(Number(r.costAud ?? r.aud))}`; break;
-      case "propose_rate_card_update": text = `Proposed a rate-card change for ${nm(args.customerId)} to ${num(args.newLevyPct)}%, for approval`; break;
-      case "flag_for_review": text = `Flagged for a human: ${String(args.subject ?? "")}`; break;
-      case "list_active_disruptions": text = arr && arr.length ? `Found ${arr.length} active disruption${arr.length === 1 ? "" : "s"}: ${arr.map((e) => String(e.title ?? e.road ?? "")).join("; ")}` : "Found no active disruptions"; break;
+      case "propose_rate_card_update": text = `Suggested changing ${nm(args.customerId)}'s fuel surcharge to ${num(args.newLevyPct)}%. Waiting for you to accept or decline`; break;
+      case "flag_for_review": text = `Needs your call: ${plainText(String(args.subject ?? ""))}`; break;
+      case "list_active_disruptions": text = arr && arr.length ? `Found ${arr.length} road problem${arr.length === 1 ? "" : "s"} right now: ${arr.map((e) => String(e.title ?? e.road ?? "")).join("; ")}` : "Found no road problems right now"; break;
       case "find_affected_loads": {
         const refs = [...new Set((arr ?? []).map((l) => String(l.ref ?? "")))];
-        text = refs.length ? `${refs.length} load${refs.length === 1 ? " crosses" : "s cross"} the closure: ${refs.join(", ")}` : "No loads cross the closure";
+        text = refs.length ? `${refs.length} delivery job${refs.length === 1 ? " goes" : "s go"} through the closure: ${refs.join(", ")}` : "None of your delivery jobs go through the closure";
         break;
       }
       case "weather_along_route": {
@@ -94,19 +109,19 @@ export function storyLines(steps: AgentStep[]): StoryLine[] {
       }
       case "plan_detour":
         text = r.found
-          ? `Planned a detour for ${nm(args.loadId)}: ${num(r.detourHours)} h via the long way (${Number(r.deltaHours) >= 0 ? "+" : ""}${num(r.deltaHours)} h), with ${num(r.hoursUntilDue)} h until it is due`
-          : `Could not find a truck-legal detour for ${nm(args.loadId)}`;
+          ? `Found a new route around the problem for ${nm(args.loadId)}: ${num(r.detourHours)} hours the long way (${Number(r.deltaHours) >= 0 ? "+" : ""}${num(r.deltaHours)} h on the plan), with ${num(r.hoursUntilDue)} hours until it is due`
+          : `Could not find a road around the problem that this truck is allowed on for ${nm(args.loadId)}`;
         break;
-      case "propose_replan": text = `Proposed re-routing ${nm(args.loadId)}, for approval`; break;
-      case "propose_hold": text = `Proposed holding ${nm(args.loadId)} until the road clears, for approval`; break;
-      case "escalate": text = `Escalated ${nm(args.loadId)} to a human: ${String(args.subject ?? "")}`; break;
-      case "draft_customer_notice": text = `Drafted a notice to the customer about ${nm(args.loadId)} (sent to the queue automatically, low risk)`; break;
-      case "list_fleet_availability": text = `Checked ${arr?.length ?? "the"} trucks for who is free and legal to drive`; break;
-      case "list_uncovered_loads": text = arr && arr.length ? `${arr.length} load${arr.length === 1 ? " has" : "s have"} no driver: ${arr.map((l) => String(l.ref ?? "")).join(", ")}` : "Every load has a driver"; break;
-      case "fatigue_check": text = `Checked legal driving hours for ${nm(args.truckId)}: ${r.legal === false ? "not enough hours left today" : "within HVNL limits"}`; break;
-      case "propose_reassignment": text = `Proposed moving ${nm(args.loadId)} onto ${nm(args.truckId)} (${num(args.emptyKm, 0)} km empty running), for approval`; break;
-      case "escalate_uncovered": text = `Escalated ${nm(args.loadId)}: nobody can legally cover it today`; break;
-      default: text = `${s.name ?? "Did something"}` + (err ? `: ${err}` : "");
+      case "propose_replan": text = `Suggested a new route for ${nm(args.loadId)}. Waiting for you to accept or decline`; break;
+      case "propose_hold": text = `Suggested keeping ${nm(args.loadId)} at the depot until the road clears. Waiting for you to accept or decline`; break;
+      case "escalate": text = `${nm(args.loadId)} needs your call: ${plainText(String(args.subject ?? ""))}`; break;
+      case "draft_customer_notice": text = `Wrote a note to the customer about ${nm(args.loadId)} (saved for you to send; it changes nothing)`; break;
+      case "list_fleet_availability": text = `Checked ${arr?.length ?? "the"} trucks for who is free and within their driving hours`; break;
+      case "list_uncovered_loads": text = arr && arr.length ? `${arr.length} delivery job${arr.length === 1 ? " has" : "s have"} no driver: ${arr.map((l) => String(l.ref ?? "")).join(", ")}` : "Every delivery job has a driver"; break;
+      case "fatigue_check": text = `Checked the driving-hours rules for ${nm(args.truckId)}: ${r.legal === false ? "not enough hours left today" : "enough hours left today"}`; break;
+      case "propose_reassignment": text = `Suggested moving ${nm(args.loadId)} onto ${nm(args.truckId)} (${num(args.emptyKm, 0)} km driving empty to get there). Waiting for you to accept or decline`; break;
+      case "escalate_uncovered": text = `${nm(args.loadId)} needs your call: nobody can legally take it today`; break;
+      default: text = `${s.name ? s.name.replace(/_/g, " ") : "Did something"}` + (err ? `: ${plainText(err)}` : "");
     }
     out.push({ text, tone: err ? "warn" : propose ? "propose" : "normal" });
   }
@@ -116,12 +131,12 @@ export function storyLines(steps: AgentStep[]): StoryLine[] {
 export function RunStory({ run, steps, compact = false }: { run: AgentRun; steps: AgentStep[]; compact?: boolean }) {
   const lines = useMemo(() => storyLines(steps), [steps]);
   const [eng, setEng] = useState(false);
-  const label = AGENT_LABEL[run.agent] ?? run.agent;
+  const label = agentName(run.agent);
   return (
     <div>
       <div className="text-xs text-bitumen-500">
-        The {label} woke up because: <span className="font-medium text-bitumen-700">{run.trigger.replace(/^scenario:\w+\s*\((.*)\)$/, "$1")}</span>
-        {run.mock ? " · running a scripted plan, no model key configured" : ""}
+        The {label} started because: <span className="font-medium text-bitumen-700">{plainText(run.trigger)}</span>
+        {run.mock ? " · following a fixed script, the live AI is switched off" : ""}
       </div>
       <ol className="mt-3 space-y-2">
         {lines.map((l, i) => (
@@ -140,7 +155,7 @@ export function RunStory({ run, steps, compact = false }: { run: AgentRun; steps
           </li>
         ))}
         {run.status === "running" && <li className="text-[14px] italic text-bitumen-500">Still working…</li>}
-        {lines.length === 0 && run.status !== "running" && <li className="text-sm text-bitumen-500">Nothing was recorded for this run.</li>}
+        {lines.length === 0 && run.status !== "running" && <li className="text-sm text-bitumen-500">Nothing was recorded for this check.</li>}
       </ol>
       <button
         type="button"

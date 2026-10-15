@@ -1,10 +1,10 @@
 import Link from "next/link";
 
-export const BRAND_NAME = "Haulio";
+export const BRAND_NAME = "Haulora";
 export const BRAND_TAGLINE = "AI dispatch for trucking";
 
 /**
- * The Haulio mark: an "H" drawn as two road lanes with a route chevron for
+ * The Haulora mark: an "H" drawn as two road lanes with a route chevron for
  * the crossbar. Inline SVG, no external image. `onDark` flips the lane
  * colour so the mark sits on the bitumen-dark surfaces as well as white.
  */
@@ -24,7 +24,7 @@ export function Mark({ size = 28, onDark = false, className = "" }: { size?: num
   );
 }
 
-/** Mark + "Haulio" in a confident weight. No link; wrap it yourself. */
+/** Mark + "Haulora" in a confident weight. No link; wrap it yourself. */
 export function Wordmark({
   className = "", onDark = false, size = "md",
 }: { className?: string; onDark?: boolean; size?: "sm" | "md" | "lg" }) {

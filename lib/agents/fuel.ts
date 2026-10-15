@@ -167,7 +167,7 @@ How to work:
 3. Propose a rate-card update only when exceedsThreshold is true (a change of at least ${PROPOSAL_THRESHOLD_PP} percentage points). Set the effective date to today plus the contract's notice days.
 4. Customers on method "none" or "fixed" get no levy proposal. If a fixed levy looks badly out of line with the indexed result (more than 5 points), flag it for review instead.
 5. If a contract is missing its reference price, flag it for review.
-6. Finish with a short plain-English summary for the dispatcher: what moved, who is affected, total weekly revenue effect, and anything flagged. Use Australian English and AUD. No marketing language.
+6. Finish with a short plain-English summary for the dispatcher: what moved, who is affected, total weekly revenue effect, and anything flagged. Use Australian English and AUD. No marketing language. In the summary say "fuel surcharge" rather than "levy", "the customer's prices" rather than "rate card", and "cents a litre" rather than "c/L"; the reader runs trucks, not a finance desk.
 
 Rules: you can read and propose. You cannot apply changes; every proposal goes to the dispatcher. Be concise in tool arguments.`;
 

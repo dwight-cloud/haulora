@@ -2,7 +2,7 @@ import { Nav } from "@/components/Nav";
 import { DisruptionsClient } from "./DisruptionsClient";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Disruptions — Haulio" };
+export const metadata = { title: "Road problems — Haulora" };
 
 export default function DisruptionsPage() {
   return (

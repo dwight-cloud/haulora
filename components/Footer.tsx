@@ -10,7 +10,7 @@ export function Footer() {
           <span className="text-bitumen-400">{BRAND_TAGLINE} · Proof of concept, {new Date().getFullYear()}</span>
         </div>
         <nav className="flex items-center gap-1" aria-label="Footer">
-          <FootLink href="/#agents">Agents</FootLink>
+          <FootLink href="/#agents">AI helpers</FootLink>
           <FootLink href="/about">How it works</FootLink>
           <FootLink href="/login">Sign in</FootLink>
         </nav>
