@@ -18,7 +18,7 @@ import type { RoadEvent, RoadEventKind, Severity } from "../domain/types";
 const QLDTRAFFIC_PUBLIC_KEY = "3e83add325cbb69ac4d8e5bf433d770b";
 const EVENTS_URL = "https://api.qldtraffic.qld.gov.au/v2/events";
 const TIMEOUT_MS = 8000;
-const UA = "LogisticMind/0.1 (demo)";
+const UA = "Drover/0.1 (demo)";
 
 export type QldTrafficEvent = Omit<RoadEvent, "id" | "createdAt" | "accountId">;
 

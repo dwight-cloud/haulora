@@ -17,7 +17,7 @@ services:
       AGENT_MAX_RUN_COST_USD: ${AGENT_MAX_RUN_COST_USD:-0.25}
       AGENT_DAILY_SPEND_CAP_USD: ${AGENT_DAILY_SPEND_CAP_USD:-5}
       AUTO_EXECUTE_LOW_RISK: ${AUTO_EXECUTE_LOW_RISK:-1}
-      DB_PATH: /app/data/logisticmind.db
+      DB_PATH: /app/data/drover.db
     volumes:
       - ./data:/app/data
     expose:

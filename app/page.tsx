@@ -38,7 +38,7 @@ export default function LandingPage() {
         <section className="border-b border-ink-200 bg-white">
           <div className="mx-auto max-w-6xl px-6 pb-16 pt-20 md:pt-28">
             <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-500">Proof of concept</div>
-            <h1 className="mt-3 text-5xl font-bold tracking-tight text-ink-900 md:text-6xl">LogisticMind</h1>
+            <h1 className="mt-3 text-5xl font-bold tracking-tight text-ink-900 md:text-6xl">Drover</h1>
             <p className="mt-3 max-w-2xl text-xl text-ink-600">
               An AI dispatcher copilot for Australian road freight operators
             </p>

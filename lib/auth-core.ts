@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
 
-export const SESSION_COOKIE = "lm_session";
+export const SESSION_COOKIE = "drover_session";
 const ALG = "HS256";
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
 

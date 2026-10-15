@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const BRAND_NAME = "LogisticMind";
+export const BRAND_NAME = "Drover";
 export const BRAND_TAGLINE = "AI dispatcher copilot for Australian road freight";
 
 export function Logo({ dark = false, href = "/" }: { dark?: boolean; href?: string }) {
@@ -26,7 +26,7 @@ export default Logo;
 export function Wordmark({ className = "", onDark = false }: { className?: string; onDark?: boolean }) {
   return (
     <span className={`inline-flex items-center gap-2 ${className}`}>
-      <span className={`inline-flex h-6 w-6 items-center justify-center rounded-md text-[10px] font-bold ${onDark ? "bg-white text-ink-900" : "bg-ink-900 text-white"}`}>LM</span>
+      <span className={`inline-flex h-6 w-6 items-center justify-center rounded-md text-[10px] font-bold ${onDark ? "bg-white text-ink-900" : "bg-ink-900 text-white"}`}>Dr</span>
       <span className={`text-[15px] font-semibold tracking-tight ${onDark ? "text-white" : ""}`}>{BRAND_NAME}</span>
     </span>
   );

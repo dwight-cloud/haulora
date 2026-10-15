@@ -1,7 +1,7 @@
 /**
  * Run with: npx tsx --test lib/au/__tests__/road-events.test.ts
  * No live APIs are called. The SQLite file is redirected to a temp path so the
- * test never touches data/logisticmind.db.
+ * test never touches data/drover.db.
  */
 import { test, before } from "node:test";
 import assert from "node:assert/strict";
