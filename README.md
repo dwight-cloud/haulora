@@ -1,10 +1,12 @@
 # Haulio
 
-An AI dispatcher copilot for small and mid-size Australian road freight operators. Three agents watch the three things squeezing a 5 to 50 truck fleet in 2026: diesel, road disruption, and driver capacity. Each one reads live and seeded data, decides with a deterministic engine, and **proposes**. A dispatcher approves. Low-risk housekeeping (customer notices, review flags) executes on its own.
+Fleet management for small and mid-size Australian road freight operators, with three AI agents inside it and a helper you can chat to. The agents watch the three things squeezing a 5 to 50 truck fleet in 2026: diesel, road disruption, and driver capacity. Each one reads live and seeded data, decides with a deterministic engine, and **proposes**. A dispatcher approves. Low-risk housekeeping (customer notices, review flags) executes on its own.
 
 This is a proof of concept built for a case study. It is honest about what is live and what is seeded (see *Data sources*).
 
 ## What it does
+
+Pages a dispatcher already understands: Overview, Fleet, Loads, Customers, Disruptions, Decisions. The AI agents live inside them. A read-only helper ("Ask Haulio", bottom right) explains the system, says what to click, and describes what is happening in the fleet right now; it can never change anything and runs under the same cost caps as the agents.
 
 | Agent | Trigger | Decides | Proposes | Metric |
 |---|---|---|---|---|
