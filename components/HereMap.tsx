@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 interface Marker { id: string; lat: number; lon: number; label?: string }
 interface AltRoute { polyline: string; label?: string }
+interface RouteLine { polyline: string; color?: string; label?: string; width?: number }
 interface IsolineRing { polyline: string; label?: string; color?: string }
 interface IncidentPoint { lat: number; lon: number; type: string; description: string; criticality: number }
 
@@ -16,6 +17,12 @@ interface Props {
   markers?: Marker[];
   polyline?: string;
   alternates?: AltRoute[];
+  /** Any number of coloured routes drawn together (fleet view). Does not re-fit the viewport. */
+  routes?: RouteLine[];
+  /** "label" draws each marker as a small tag with its label text (truck codes). */
+  markerStyle?: "pin" | "label";
+  /** Fit the viewport to all routes/markers on load (default: only when `polyline` is set). */
+  fitToRoutes?: boolean;
   onSelectAlternate?: (index: number) => void;
   isolines?: IsolineRing[];
   incidents?: IncidentPoint[];
@@ -123,7 +130,7 @@ function poiMarkerIcon(H: any, kind: string) {
 }
 
 export function HereMap({
-  apiKey, center, zoom = 5, markers = [], polyline, alternates = [], onSelectAlternate,
+  apiKey, center, zoom = 5, markers = [], polyline, alternates = [], routes = [], fitToRoutes = false, markerStyle = "pin", onSelectAlternate,
   isolines = [], incidents = [], height = "520px",
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
@@ -175,8 +182,30 @@ export function HereMap({
       }
 
       for (const m of markers) {
-        map.addObject(new H.map.Marker({ lat: m.lat, lng: m.lon }));
+        if (markerStyle === "label" && m.label) {
+          const text = String(m.label).replace(/[<>&]/g, "");
+          const w = Math.max(34, text.length * 7 + 14);
+          const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="26" viewBox="0 0 ${w} 26"><rect x="1" y="1" width="${w - 2}" height="18" rx="4" fill="#0F172A" stroke="white" stroke-width="1.5"/><path d="M${w / 2 - 4} 19 L${w / 2} 25 L${w / 2 + 4} 19 Z" fill="#0F172A"/><text x="${w / 2}" y="13.5" font-family="system-ui,sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="white">${text}</text></svg>`;
+          const icon = new H.map.Icon(svg, { size: { w, h: 26 }, anchor: { x: w / 2, y: 26 } });
+          map.addObject(new H.map.Marker({ lat: m.lat, lng: m.lon }, { icon }));
+        } else {
+          map.addObject(new H.map.Marker({ lat: m.lat, lng: m.lon }));
+        }
       }
+
+      // Multi-route fleet view: every route in its own colour.
+      let fleetBounds: any = null;
+      for (const r of routes) {
+        try {
+          const line = H.geo.LineString.fromFlexiblePolyline(r.polyline);
+          const poly = new H.map.Polyline(line, { style: { strokeColor: r.color ?? "#1F8BFF", lineWidth: r.width ?? 4 } });
+          if (r.label) (poly as any).setData?.(r.label);
+          map.addObject(poly);
+          const bb = poly.getBoundingBox();
+          fleetBounds = fleetBounds ? fleetBounds.mergeRect(bb) : bb;
+        } catch (e) { origErr("route polyline decode failed", e); }
+      }
+      if (fitToRoutes && fleetBounds) map.getViewModel().setLookAtData({ bounds: fleetBounds });
 
       // Alternate polylines (rendered first so primary is on top)
       alternates.forEach((alt, idx) => {
@@ -254,7 +283,7 @@ export function HereMap({
         mapRef.current = null;
       }
     };
-  }, [apiKey, center?.lat, center?.lon, zoom, JSON.stringify(markers), polyline, JSON.stringify(alternates), JSON.stringify(isolines), JSON.stringify(incidents), style, showTraffic, showTruckRestr]);
+  }, [apiKey, center?.lat, center?.lon, zoom, JSON.stringify(markers), polyline, JSON.stringify(alternates), JSON.stringify(routes), fitToRoutes, markerStyle, JSON.stringify(isolines), JSON.stringify(incidents), style, showTraffic, showTruckRestr]);
 
   // Fetch POIs near map center when toggled on
   useEffect(() => {

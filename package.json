@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed": "tsx scripts/seed.ts",
+    "seed:warm": "tsx scripts/seed.ts --warm",
+    "eval": "tsx scripts/eval.ts all",
+    "eval:live": "tsx scripts/eval.ts all --live",
+    "agent": "tsx scripts/run-agent.ts",
+    "test": "tsx --test lib/au/__tests__/*.test.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

@@ -1,61 +1,100 @@
 import Link from "next/link";
+import { Fuel, TriangleAlert, Users, ArrowRight } from "lucide-react";
 import { Nav } from "@/components/Nav";
-import { Hero } from "@/components/Hero";
-import { FeatureGrid } from "@/components/FeatureGrid";
 import { Footer } from "@/components/Footer";
+import { DemoButton } from "@/components/DemoButton";
+import { Pill } from "@/components/ui/primitives";
 
-export default function Page() {
+const AGENTS = [
+  {
+    icon: <Fuel />, name: "Fuel agent", status: "Live model" as const,
+    trigger: "diesel price moves",
+    decision: "what each customer's levy should be",
+    action: "proposes rate-card updates with the notice drafted",
+    metric: "A$ recovered per week",
+  },
+  {
+    icon: <TriangleAlert />, name: "Disruption agent", status: "Live model" as const,
+    trigger: "road or weather event",
+    decision: "reroute, hold, proceed or escalate per load",
+    action: "proposes truck-legal detours and holds",
+    metric: "cargo value protected, hours saved",
+  },
+  {
+    icon: <Users />, name: "Capacity agent", status: "Phase 2, rules only" as const,
+    trigger: "driver or truck unavailable",
+    decision: "which idle truck can legally cover",
+    action: "proposes reassignments or escalates",
+    metric: "loads covered per driver-day",
+  },
+];
+
+export default function LandingPage() {
   return (
     <>
       <Nav />
-      <main>
-        <Hero />
-        <FeatureGrid />
-
-        {/* Split: dispatcher vs driver */}
-        <section className="border-y border-ink-200 bg-white">
-          <div className="mx-auto grid max-w-7xl gap-10 px-6 py-24 md:grid-cols-2">
-            <Panel
-              eyebrow="For dispatchers"
-              title="A command deck that actually helps you dispatch."
-              body="See every truck, their HOS, their route risk, and their fuel in one glance. Assign loads, push route updates, and handle the ten things that happen between 6 and 7am."
-              cta={{ label: "Open the dashboard", href: "/dashboard" }}
-              accent="navy"
-            />
-            <Panel
-              eyebrow="For drivers"
-              title="One tap. Your route, your drop-off, your hours."
-              body="No toggling between five apps. Your assigned run, commercial-legal turn-by-turn, and the last-mile details dispatch baked in — all on your phone."
-              cta={{ label: "See the driver view", href: "/driver" }}
-              accent="signal"
-            />
+      <main className="bg-offwhite">
+        {/* Hero */}
+        <section className="border-b border-ink-200 bg-white">
+          <div className="mx-auto max-w-6xl px-6 pb-16 pt-20 md:pt-28">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-500">Proof of concept</div>
+            <h1 className="mt-3 text-5xl font-bold tracking-tight text-ink-900 md:text-6xl">LogisticMind</h1>
+            <p className="mt-3 max-w-2xl text-xl text-ink-600">
+              An AI dispatcher copilot for Australian road freight operators
+            </p>
+            <p className="mt-8 max-w-3xl text-[15px] leading-7 text-ink-700">
+              Diesel in Queensland has sat around 100 c/L above its February 2026 level since the Strait of Hormuz
+              closed, and every contract with a fuel levy is either under-recovering or being re-priced by hand.
+              Floods cut the Bruce and Stuart highways this year, and each closure means a dispatcher re-planning
+              loads one phone call at a time. Australia is roughly 28,000 truck drivers short, so the people doing
+              that re-planning are the same people covering the gaps on the road.
+            </p>
+            <div className="mt-10 flex flex-wrap items-center gap-4">
+              <DemoButton />
+              <Link href="/about" className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-700 hover:text-ink-900">
+                How it works <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </section>
 
-        {/* Pricing / CTA */}
-        <section id="pricing" className="relative overflow-hidden bg-ink-900 text-offwhite">
-          <div className="absolute inset-0 bg-hero-glow opacity-70" aria-hidden />
-          <div className="relative mx-auto max-w-5xl px-6 py-24 text-center">
-            <h2 className="text-4xl font-black tracking-tight md:text-5xl">
-              Ready to see it on your lanes?
-            </h2>
-            <p className="mt-4 text-lg text-offwhite/70">
-              Start a fleet account in 60 seconds — no credit card until you invite a second dispatcher.
-            </p>
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-              <Link
-                href="/login"
-                className="rounded-xl bg-ink-900 px-7 py-3.5 font-bold text-white shadow-glow transition hover:brightness-110"
-              >
-                Start a fleet account
-              </Link>
-              <Link
-                href="/plan"
-                className="rounded-xl border border-white/15 bg-white/5 px-7 py-3.5 font-semibold backdrop-blur transition hover:bg-white/10"
-              >
-                Try the planner first
-              </Link>
+        {/* Agents */}
+        <section id="agents" className="mx-auto max-w-6xl px-6 py-16">
+          <div className="flex items-end justify-between">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-ink-900">Three agents, one approval queue</h2>
+              <p className="mt-1 text-sm text-ink-500">Each agent watches one signal, decides with deterministic tools, and proposes. A dispatcher approves.</p>
             </div>
+          </div>
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {AGENTS.map((a) => (
+              <div key={a.name} className="flex flex-col rounded-xl border border-ink-200 bg-white p-5 shadow-card">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-ink-900 text-white [&>svg]:h-4 [&>svg]:w-4">{a.icon}</span>
+                  <Pill tone={a.status === "Live model" ? "success" : "neutral"}>{a.status}</Pill>
+                </div>
+                <h3 className="mt-4 text-base font-semibold text-ink-900">{a.name}</h3>
+                <dl className="mt-4 space-y-3 text-[13px]">
+                  <Row k="Trigger" v={a.trigger} />
+                  <Row k="Decision" v={a.decision} />
+                  <Row k="Action" v={a.action} />
+                  <Row k="Metric" v={a.metric} />
+                </dl>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* What this is */}
+        <section className="border-t border-ink-200 bg-white">
+          <div className="mx-auto max-w-6xl px-6 py-10">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-500">What this is</div>
+            <p className="mt-2 max-w-4xl text-sm leading-6 text-ink-700">
+              A proof of concept. Real HERE truck routing, a real OpenAI agent loop with a pinned model, a human
+              approval queue, evals, and a cost meter. Seeded Brisbane fleet; prices and closures from 2026 public
+              sources, scenarios simulated.
+            </p>
+            <div className="mt-6"><DemoButton size="md" /></div>
           </div>
         </section>
       </main>
@@ -64,26 +103,11 @@ export default function Page() {
   );
 }
 
-function Panel({
-  eyebrow, title, body, cta, accent,
-}: { eyebrow: string; title: string; body: string; cta: { label: string; href: string }; accent: "navy" | "signal" }) {
+function Row({ k, v }: { k: string; v: string }) {
   return (
-    <div className="relative rounded-2xl border border-ink-200 bg-offwhite p-8 shadow-card">
-      <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-widest ${
-        accent === "signal" ? "bg-ink-100 text-ink-900-700" : "bg-ink-50 text-ink-600"
-      }`}>
-        <span className={`h-1.5 w-1.5 rounded-full ${accent === "signal" ? "bg-ink-900" : "bg-ink-900"}`} />
-        {eyebrow}
-      </div>
-      <h3 className="mt-4 text-2xl font-black tracking-tight md:text-3xl">{title}</h3>
-      <p className="mt-3 text-ink-500">{body}</p>
-      <Link
-        href={cta.href}
-        className="mt-6 inline-flex items-center gap-1.5 text-sm font-bold text-ink-900 hover:text-ink-900"
-      >
-        {cta.label}
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-      </Link>
+    <div className="grid grid-cols-[72px_1fr] gap-2">
+      <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-400 pt-0.5">{k}</dt>
+      <dd className="text-ink-700">{v}</dd>
     </div>
   );
 }

@@ -29,6 +29,11 @@ const detourCache = new Map<string, { polyline: string; km: number; hours: numbe
 
 const DEFAULT_PROFILE = { heightMeters: 4.3, weightKg: 62500, axleCount: 9 };
 
+/** Minor events (roadworks, lane restrictions) never trigger action; the rules say proceed. */
+export function actionableEvents(accountId: string): RoadEvent[] {
+  return listActiveEvents(accountId).filter((e) => e.severity !== "minor");
+}
+
 function hoursUntil(ms: number, now: number): number { return (ms - now) / 3600_000; }
 
 export function decide(args: {
@@ -61,9 +66,9 @@ export function decide(args: {
 const listDisruptions: ToolDef<Record<string, never>> = {
   name: "list_active_disruptions",
   risk: "read",
-  description: "Active road and weather events: kind, road, severity, centre, radius, start and expected end.",
+  description: "Active road and weather events of moderate severity or worse: kind, road, severity, centre, radius, start and expected end. Minor events are filtered out because the rule for them is always proceed.",
   parameters: { type: "object", properties: {} },
-  handler: (_a, ctx) => listActiveEvents(ctx.accountId),
+  handler: (_a, ctx) => actionableEvents(ctx.accountId),
 };
 
 const findAffected: ToolDef<Record<string, never>> = {
@@ -72,7 +77,7 @@ const findAffected: ToolDef<Record<string, never>> = {
   description: "Every in-flight load whose planned or current route passes through an active event, with the load's due time, cargo value, essential and perishable flags, and how close the route comes to the event centre.",
   parameters: { type: "object", properties: {} },
   handler: (_a, ctx) =>
-    affectedLoads(ctx.accountId).map(({ load, event, nearestKm }) => ({
+    affectedLoads(ctx.accountId, actionableEvents(ctx.accountId)).map(({ load, event, nearestKm }) => ({
       loadId: load.id, ref: load.ref, status: load.status, customerId: load.customerId,
       origin: load.originLabel, destination: load.destLabel, dueAtIso: new Date(load.dueAt).toISOString(),
       hoursUntilDue: Number(hoursUntil(load.dueAt, ctx.now).toFixed(1)),
@@ -108,7 +113,7 @@ const planDetour: ToolDef<{ loadId: string }> = {
   handler: async ({ loadId }, ctx) => {
     const l = getLoad(loadId);
     if (!l || l.accountId !== ctx.accountId) return { error: "Load not found" };
-    const events = listActiveEvents(ctx.accountId);
+    const events = actionableEvents(ctx.accountId);
     const truck = l.truckId ? getTruck(l.truckId) : undefined;
     const profile = truck ? { heightMeters: truck.heightM, weightKg: truck.grossKg, axleCount: truck.axleCount, hazardous: truck.hazardous } : DEFAULT_PROFILE;
     // From the truck's live position when it is already rolling, else from origin.
@@ -118,13 +123,17 @@ const planDetour: ToolDef<{ loadId: string }> = {
       // Verify the detour really clears the events; HERE treats avoid areas as soft in some cases.
       const stillHit = events.filter((ev) => polylineIntersectsEvent(r.primary.polyline, ev).hits).map((ev) => ev.id);
       const km = r.primary.distanceMeters / 1000, hours = r.primary.durationSeconds / 3600;
-      const plannedKm = l.plannedKm ?? km, plannedHours = l.plannedHours ?? hours;
-      const entry = { polyline: r.primary.polyline, km, hours, deltaKm: km - plannedKm, deltaHours: hours - plannedHours, eventIds: events.map((e) => e.id) };
+      // Delta versus plan only makes sense from the origin. From a live position
+      // the planned figures cover ground already driven, so we report totals only.
+      const fromOrigin = !(truck && l.status === "en_route");
+      const deltaKm = fromOrigin && l.plannedKm != null ? km - l.plannedKm : 0;
+      const deltaHours = fromOrigin && l.plannedHours != null ? hours - l.plannedHours : 0;
+      const entry = { polyline: r.primary.polyline, km, hours, deltaKm, deltaHours, eventIds: events.map((e) => e.id) };
       detourCache.set(`${ctx.runId}:${loadId}`, entry);
       return {
-        found: stillHit.length === 0, stillCrossesEvents: stillHit,
+        found: stillHit.length === 0, stillCrossesEvents: stillHit, measuredFrom: fromOrigin ? "origin" : "truck's current position",
         detourKm: Number(km.toFixed(0)), detourHours: Number(hours.toFixed(1)),
-        deltaKm: Number(entry.deltaKm.toFixed(0)), deltaHours: Number(entry.deltaHours.toFixed(1)),
+        deltaKm: fromOrigin ? Number(deltaKm.toFixed(0)) : null, deltaHours: fromOrigin ? Number(deltaHours.toFixed(1)) : null,
         hoursUntilDue: Number(hoursUntil(l.dueAt, ctx.now).toFixed(1)),
         notices: r.primary.notices.slice(0, 5), tollsAud: r.primary.tolls?.total ?? null,
       };
@@ -147,11 +156,11 @@ const proposeReplan: ToolDef<{ loadId: string; reason: string }> = {
     const risk = d.deltaHours > 3 || l.valueAud > 100_000 ? "high" : "medium";
     const action = propose({
       accountId: ctx.accountId, runId: ctx.runId, agent: "disruption",
-      title: `${l.ref}: re-route around disruption (+${d.deltaKm.toFixed(0)} km, +${d.deltaHours.toFixed(1)} h)`,
+      title: `${l.ref}: re-route around disruption (${d.km.toFixed(0)} km, ${d.hours.toFixed(1)} h${d.deltaHours ? `, ${d.deltaHours > 0 ? "+" : ""}${d.deltaHours.toFixed(1)} h vs plan` : ""})`,
       description: reason, impactAud: l.valueAud, risk,
       payload: { kind: "replan_load", data: { loadId, polyline: d.polyline, km: d.km, hours: d.hours, reason, eventId: d.eventIds[0] } },
     });
-    ctx.notes.push(`Proposed re-route for ${l.ref} (+${d.deltaHours.toFixed(1)} h).`);
+    ctx.notes.push(`Proposed re-route for ${l.ref} (${d.hours.toFixed(1)} h via detour).`);
     return { actionId: action.id, status: action.status, risk };
   },
 };
@@ -227,7 +236,7 @@ async function mockPlan(ctx: RunContext) {
     { tool: "list_active_disruptions", args: {}, thought: "What is cut right now?" },
     { tool: "find_affected_loads", args: {} },
   ];
-  const affected = affectedLoads(ctx.accountId);
+  const affected = affectedLoads(ctx.accountId, actionableEvents(ctx.accountId));
   const seen = new Set<string>();
   let n = 0;
   for (const { load, event, nearestKm } of affected) {
@@ -249,7 +258,7 @@ async function mockPlan(ctx: RunContext) {
       n += 1;
     }
   }
-  return { steps, summary: `Mock run: ${listActiveEvents(ctx.accountId).length} active events, ${seen.size} loads affected, ${n} proposals raised.` };
+  return { steps, summary: `Mock run: ${actionableEvents(ctx.accountId).length} actionable events, ${seen.size} loads affected, ${n} proposals raised.` };
 }
 
 export const disruptionAgent: AgentSpec = {
