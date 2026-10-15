@@ -6,3 +6,5 @@ out
 .env.production
 .DS_Store
 *.log
+data/
+*.tsbuildinfo

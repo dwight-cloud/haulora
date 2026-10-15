@@ -1,0 +1,1728 @@
+{
+  "_rules": {
+    "description": "Triage rules for a load whose route passes near a road/weather event. Evaluate in order; the first matching rule wins.",
+    "order": [
+      "1. proceed: event.nearestKm > event.radiusKm (route does not enter the zone) OR event.severity == 'minor'.",
+      "2. escalate: event.severity == 'critical' AND load.status == 'en_route' (truck is already inside / committed to the affected zone).",
+      "3. reroute: detourHoursIfRerouted is a number AND nowIso + load.plannedHours + detourHoursIfRerouted <= load.dueAtIso.",
+      "4. escalate: (no detour, or the detour misses dueAtIso) AND (load.essential OR load.perishable).",
+      "5. hold: otherwise (no detour or detour misses due time, and the load is neither essential nor perishable)."
+    ],
+    "customerNoticeRequired": "true whenever decision != 'proceed'.",
+    "priority": "'essential' if load.essential, else 'perishable' if load.perishable, else 'standard'.",
+    "notes": [
+      "load.plannedHours is the driving time still ahead on the current route; the detour adds to it.",
+      "Timestamps are ISO-8601 in Australia/Brisbane (UTC+10, no DST).",
+      "event.endsAtIso is informational for the agent's reasoning; the golden decision does not depend on it."
+    ]
+  },
+  "_generatedBy": "evals/generate_disruption_cases.ts",
+  "_decisionCounts": {
+    "reroute": 17,
+    "escalate": 12,
+    "hold": 7,
+    "proceed": 14
+  },
+  "cases": [
+    {
+      "id": "disruption-001",
+      "input": {
+        "load": {
+          "ref": "LM-1001",
+          "status": "planned",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Townsville, QLD",
+          "dueAtIso": "2026-10-15T23:30:00+10:00",
+          "tonnes": 24,
+          "valueAud": 180000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 15.5
+        },
+        "event": {
+          "kind": "flood",
+          "severity": "major",
+          "road": "Bruce Hwy",
+          "title": "Water over road at Gympie",
+          "radiusKm": 5,
+          "endsAtIso": null,
+          "nearestKm": 1
+        },
+        "detourHoursIfRerouted": 1.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "reroute",
+        "reason": "Detour of 1.5 h avoids Bruce Hwy and still arrives before the due time.",
+        "customerNoticeRequired": true,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-002",
+      "input": {
+        "load": {
+          "ref": "LM-1002",
+          "status": "planned",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Rockhampton, QLD",
+          "dueAtIso": "2026-10-15T16:30:00+10:00",
+          "tonnes": 18,
+          "valueAud": 95000,
+          "perishable": true,
+          "essential": false,
+          "plannedHours": 8.5
+        },
+        "event": {
+          "kind": "flood",
+          "severity": "major",
+          "road": "Bruce Hwy",
+          "title": "Water over road at Gympie",
+          "radiusKm": 5,
+          "endsAtIso": null,
+          "nearestKm": 1
+        },
+        "detourHoursIfRerouted": 1.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "reroute",
+        "reason": "Detour of 1.5 h avoids Bruce Hwy and still arrives before the due time.",
+        "customerNoticeRequired": true,
+        "priority": "perishable"
+      }
+    },
+    {
+      "id": "disruption-003",
+      "input": {
+        "load": {
+          "ref": "LM-1003",
+          "status": "en_route",
+          "originLabel": "Toowoomba, QLD",
+          "destLabel": "Mount Isa, QLD",
+          "dueAtIso": "2026-10-16T06:00:00+10:00",
+          "tonnes": 22,
+          "valueAud": 240000,
+          "perishable": false,
+          "essential": true,
+          "plannedHours": 22
+        },
+        "event": {
+          "kind": "flood",
+          "severity": "major",
+          "road": "Bruce Hwy",
+          "title": "Water over road at Gympie",
+          "radiusKm": 5,
+          "endsAtIso": null,
+          "nearestKm": 1
+        },
+        "detourHoursIfRerouted": 1.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "reroute",
+        "reason": "Detour of 1.5 h avoids Bruce Hwy and still arrives before the due time.",
+        "customerNoticeRequired": true,
+        "priority": "essential"
+      }
+    },
+    {
+      "id": "disruption-004",
+      "input": {
+        "load": {
+          "ref": "LM-1004",
+          "status": "en_route",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Gold Coast, QLD",
+          "dueAtIso": "2026-10-15T09:30:00+10:00",
+          "tonnes": 12,
+          "valueAud": 30000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 1.5
+        },
+        "event": {
+          "kind": "closure",
+          "severity": "critical",
+          "road": "Bruce Hwy",
+          "title": "Bruce Hwy closed at Rockhampton floodplain",
+          "radiusKm": 8,
+          "endsAtIso": "2026-10-16T18:00:00+10:00",
+          "nearestKm": 1.6
+        },
+        "detourHoursIfRerouted": 1.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "escalate",
+        "reason": "Critical closure on Bruce Hwy with the truck already en route inside the zone; dispatcher must direct the driver.",
+        "customerNoticeRequired": true,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-005",
+      "input": {
+        "load": {
+          "ref": "LM-1005",
+          "status": "delayed",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Cairns, QLD",
+          "dueAtIso": "2026-10-16T04:00:00+10:00",
+          "tonnes": 20,
+          "valueAud": 320000,
+          "perishable": true,
+          "essential": true,
+          "plannedHours": 20
+        },
+        "event": {
+          "kind": "closure",
+          "severity": "critical",
+          "road": "Bruce Hwy",
+          "title": "Bruce Hwy closed at Rockhampton floodplain",
+          "radiusKm": 8,
+          "endsAtIso": "2026-10-16T18:00:00+10:00",
+          "nearestKm": 1.6
+        },
+        "detourHoursIfRerouted": null,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "escalate",
+        "reason": "No detour exists around Bruce Hwy and the load is essential; needs a human call.",
+        "customerNoticeRequired": true,
+        "priority": "essential"
+      }
+    },
+    {
+      "id": "disruption-006",
+      "input": {
+        "load": {
+          "ref": "LM-1006",
+          "status": "delayed",
+          "originLabel": "Gladstone, QLD",
+          "destLabel": "Brisbane, QLD",
+          "dueAtIso": "2026-10-15T14:30:00+10:00",
+          "tonnes": 26,
+          "valueAud": 60000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 6.5
+        },
+        "event": {
+          "kind": "closure",
+          "severity": "critical",
+          "road": "Bruce Hwy",
+          "title": "Bruce Hwy closed at Rockhampton floodplain",
+          "radiusKm": 8,
+          "endsAtIso": "2026-10-16T18:00:00+10:00",
+          "nearestKm": 7.2
+        },
+        "detourHoursIfRerouted": null,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "hold",
+        "reason": "No detour exists around Bruce Hwy; hold the standard load until the event clears.",
+        "customerNoticeRequired": true,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-007",
+      "input": {
+        "load": {
+          "ref": "LM-1007",
+          "status": "rerouted",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Mackay, QLD",
+          "dueAtIso": "2026-10-15T20:00:00+10:00",
+          "tonnes": 16,
+          "valueAud": 140000,
+          "perishable": true,
+          "essential": false,
+          "plannedHours": 12
+        },
+        "event": {
+          "kind": "crash",
+          "severity": "moderate",
+          "road": "Warrego Hwy",
+          "title": "Multi-vehicle crash near Gatton",
+          "radiusKm": 3,
+          "endsAtIso": "2026-10-15T12:00:00+10:00",
+          "nearestKm": 2.7
+        },
+        "detourHoursIfRerouted": null,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "escalate",
+        "reason": "No detour exists around Warrego Hwy and the load is perishable; needs a human call.",
+        "customerNoticeRequired": true,
+        "priority": "perishable"
+      }
+    },
+    {
+      "id": "disruption-008",
+      "input": {
+        "load": {
+          "ref": "LM-1008",
+          "status": "rerouted",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Roma, QLD",
+          "dueAtIso": "2026-10-15T17:00:00+10:00",
+          "tonnes": 21,
+          "valueAud": 70000,
+          "perishable": false,
+          "essential": true,
+          "plannedHours": 6
+        },
+        "event": {
+          "kind": "crash",
+          "severity": "moderate",
+          "road": "Warrego Hwy",
+          "title": "Multi-vehicle crash near Gatton",
+          "radiusKm": 3,
+          "endsAtIso": "2026-10-15T12:00:00+10:00",
+          "nearestKm": 2.7
+        },
+        "detourHoursIfRerouted": null,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "escalate",
+        "reason": "No detour exists around Warrego Hwy and the load is essential; needs a human call.",
+        "customerNoticeRequired": true,
+        "priority": "essential"
+      }
+    },
+    {
+      "id": "disruption-009",
+      "input": {
+        "load": {
+          "ref": "LM-1001",
+          "status": "planned",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Townsville, QLD",
+          "dueAtIso": "2026-10-16T02:30:00+10:00",
+          "tonnes": 24,
+          "valueAud": 180000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 15.5
+        },
+        "event": {
+          "kind": "crash",
+          "severity": "moderate",
+          "road": "Warrego Hwy",
+          "title": "Multi-vehicle crash near Gatton",
+          "radiusKm": 3,
+          "endsAtIso": "2026-10-15T12:00:00+10:00",
+          "nearestKm": 2.7
+        },
+        "detourHoursIfRerouted": 4,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "reroute",
+        "reason": "Detour of 4 h avoids Warrego Hwy and still arrives before the due time.",
+        "customerNoticeRequired": true,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-010",
+      "input": {
+        "load": {
+          "ref": "LM-1002",
+          "status": "planned",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Rockhampton, QLD",
+          "dueAtIso": "2026-10-15T19:30:00+10:00",
+          "tonnes": 18,
+          "valueAud": 95000,
+          "perishable": true,
+          "essential": false,
+          "plannedHours": 8.5
+        },
+        "event": {
+          "kind": "restriction",
+          "severity": "minor",
+          "road": "Pacific Mwy",
+          "title": "Lane closure for roadworks at Coomera",
+          "radiusKm": 3,
+          "endsAtIso": "2026-10-15T15:00:00+10:00",
+          "nearestKm": 2.7
+        },
+        "detourHoursIfRerouted": 4,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "proceed",
+        "reason": "Minor restriction on Pacific Mwy; expected delay is negligible.",
+        "customerNoticeRequired": false,
+        "priority": "perishable"
+      }
+    },
+    {
+      "id": "disruption-011",
+      "input": {
+        "load": {
+          "ref": "LM-1003",
+          "status": "en_route",
+          "originLabel": "Toowoomba, QLD",
+          "destLabel": "Mount Isa, QLD",
+          "dueAtIso": "2026-10-16T09:00:00+10:00",
+          "tonnes": 22,
+          "valueAud": 240000,
+          "perishable": false,
+          "essential": true,
+          "plannedHours": 22
+        },
+        "event": {
+          "kind": "restriction",
+          "severity": "minor",
+          "road": "Pacific Mwy",
+          "title": "Lane closure for roadworks at Coomera",
+          "radiusKm": 3,
+          "endsAtIso": "2026-10-15T15:00:00+10:00",
+          "nearestKm": 4.2
+        },
+        "detourHoursIfRerouted": 4,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "proceed",
+        "reason": "Route passes 4.2 km from the event, outside its 3 km zone.",
+        "customerNoticeRequired": false,
+        "priority": "essential"
+      }
+    },
+    {
+      "id": "disruption-012",
+      "input": {
+        "load": {
+          "ref": "LM-1004",
+          "status": "en_route",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Gold Coast, QLD",
+          "dueAtIso": "2026-10-15T12:30:00+10:00",
+          "tonnes": 12,
+          "valueAud": 30000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 1.5
+        },
+        "event": {
+          "kind": "restriction",
+          "severity": "minor",
+          "road": "Pacific Mwy",
+          "title": "Lane closure for roadworks at Coomera",
+          "radiusKm": 3,
+          "endsAtIso": "2026-10-15T15:00:00+10:00",
+          "nearestKm": 4.2
+        },
+        "detourHoursIfRerouted": 4,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "proceed",
+        "reason": "Route passes 4.2 km from the event, outside its 3 km zone.",
+        "customerNoticeRequired": false,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-013",
+      "input": {
+        "load": {
+          "ref": "LM-1005",
+          "status": "delayed",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Cairns, QLD",
+          "dueAtIso": "2026-10-16T07:00:00+10:00",
+          "tonnes": 20,
+          "valueAud": 320000,
+          "perishable": true,
+          "essential": true,
+          "plannedHours": 20
+        },
+        "event": {
+          "kind": "fire",
+          "severity": "critical",
+          "road": "Flinders Hwy",
+          "title": "Bushfire crossing Flinders Hwy near Hughenden",
+          "radiusKm": 15,
+          "endsAtIso": null,
+          "nearestKm": 21
+        },
+        "detourHoursIfRerouted": 0.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "proceed",
+        "reason": "Route passes 21 km from the event, outside its 15 km zone.",
+        "customerNoticeRequired": false,
+        "priority": "essential"
+      }
+    },
+    {
+      "id": "disruption-014",
+      "input": {
+        "load": {
+          "ref": "LM-1006",
+          "status": "delayed",
+          "originLabel": "Gladstone, QLD",
+          "destLabel": "Brisbane, QLD",
+          "dueAtIso": "2026-10-15T17:30:00+10:00",
+          "tonnes": 26,
+          "valueAud": 60000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 6.5
+        },
+        "event": {
+          "kind": "fire",
+          "severity": "critical",
+          "road": "Flinders Hwy",
+          "title": "Bushfire crossing Flinders Hwy near Hughenden",
+          "radiusKm": 15,
+          "endsAtIso": null,
+          "nearestKm": 21
+        },
+        "detourHoursIfRerouted": 0.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "proceed",
+        "reason": "Route passes 21 km from the event, outside its 15 km zone.",
+        "customerNoticeRequired": false,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-015",
+      "input": {
+        "load": {
+          "ref": "LM-1007",
+          "status": "rerouted",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Mackay, QLD",
+          "dueAtIso": "2026-10-16T04:00:00+10:00",
+          "tonnes": 16,
+          "valueAud": 140000,
+          "perishable": true,
+          "essential": false,
+          "plannedHours": 12
+        },
+        "event": {
+          "kind": "fire",
+          "severity": "critical",
+          "road": "Flinders Hwy",
+          "title": "Bushfire crossing Flinders Hwy near Hughenden",
+          "radiusKm": 15,
+          "endsAtIso": null,
+          "nearestKm": 21
+        },
+        "detourHoursIfRerouted": 0.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "proceed",
+        "reason": "Route passes 21 km from the event, outside its 15 km zone.",
+        "customerNoticeRequired": false,
+        "priority": "perishable"
+      }
+    },
+    {
+      "id": "disruption-016",
+      "input": {
+        "load": {
+          "ref": "LM-1008",
+          "status": "rerouted",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Roma, QLD",
+          "dueAtIso": "2026-10-15T22:00:00+10:00",
+          "tonnes": 21,
+          "valueAud": 70000,
+          "perishable": false,
+          "essential": true,
+          "plannedHours": 6
+        },
+        "event": {
+          "kind": "weather",
+          "severity": "major",
+          "road": "Capricorn Hwy",
+          "title": "Severe thunderstorm band, 90 km/h gusts",
+          "radiusKm": 20,
+          "endsAtIso": "2026-10-15T21:00:00+10:00",
+          "nearestKm": 10
+        },
+        "detourHoursIfRerouted": 0.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "reroute",
+        "reason": "Detour of 0.5 h avoids Capricorn Hwy and still arrives before the due time.",
+        "customerNoticeRequired": true,
+        "priority": "essential"
+      }
+    },
+    {
+      "id": "disruption-017",
+      "input": {
+        "load": {
+          "ref": "LM-1001",
+          "status": "planned",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Townsville, QLD",
+          "dueAtIso": "2026-10-16T07:30:00+10:00",
+          "tonnes": 24,
+          "valueAud": 180000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 15.5
+        },
+        "event": {
+          "kind": "weather",
+          "severity": "major",
+          "road": "Capricorn Hwy",
+          "title": "Severe thunderstorm band, 90 km/h gusts",
+          "radiusKm": 20,
+          "endsAtIso": "2026-10-15T21:00:00+10:00",
+          "nearestKm": 10
+        },
+        "detourHoursIfRerouted": 9,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "reroute",
+        "reason": "Detour of 9 h avoids Capricorn Hwy and still arrives before the due time.",
+        "customerNoticeRequired": true,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-018",
+      "input": {
+        "load": {
+          "ref": "LM-1002",
+          "status": "planned",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Rockhampton, QLD",
+          "dueAtIso": "2026-10-16T00:30:00+10:00",
+          "tonnes": 18,
+          "valueAud": 95000,
+          "perishable": true,
+          "essential": false,
+          "plannedHours": 8.5
+        },
+        "event": {
+          "kind": "weather",
+          "severity": "major",
+          "road": "Capricorn Hwy",
+          "title": "Severe thunderstorm band, 90 km/h gusts",
+          "radiusKm": 20,
+          "endsAtIso": "2026-10-15T21:00:00+10:00",
+          "nearestKm": 10
+        },
+        "detourHoursIfRerouted": 9,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "reroute",
+        "reason": "Detour of 9 h avoids Capricorn Hwy and still arrives before the due time.",
+        "customerNoticeRequired": true,
+        "priority": "perishable"
+      }
+    },
+    {
+      "id": "disruption-019",
+      "input": {
+        "load": {
+          "ref": "LM-1003",
+          "status": "en_route",
+          "originLabel": "Toowoomba, QLD",
+          "destLabel": "Mount Isa, QLD",
+          "dueAtIso": "2026-10-16T14:00:00+10:00",
+          "tonnes": 22,
+          "valueAud": 240000,
+          "perishable": false,
+          "essential": true,
+          "plannedHours": 22
+        },
+        "event": {
+          "kind": "flood",
+          "severity": "moderate",
+          "road": "Dawson Hwy",
+          "title": "Flash flooding at Biloela",
+          "radiusKm": 4,
+          "endsAtIso": "2026-10-16T06:00:00+10:00",
+          "nearestKm": 2
+        },
+        "detourHoursIfRerouted": 9,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "reroute",
+        "reason": "Detour of 9 h avoids Dawson Hwy and still arrives before the due time.",
+        "customerNoticeRequired": true,
+        "priority": "essential"
+      }
+    },
+    {
+      "id": "disruption-020",
+      "input": {
+        "load": {
+          "ref": "LM-1004",
+          "status": "en_route",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Gold Coast, QLD",
+          "dueAtIso": "2026-10-15T17:30:00+10:00",
+          "tonnes": 12,
+          "valueAud": 30000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 1.5
+        },
+        "event": {
+          "kind": "flood",
+          "severity": "moderate",
+          "road": "Dawson Hwy",
+          "title": "Flash flooding at Biloela",
+          "radiusKm": 4,
+          "endsAtIso": "2026-10-16T06:00:00+10:00",
+          "nearestKm": 2
+        },
+        "detourHoursIfRerouted": 9,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "reroute",
+        "reason": "Detour of 9 h avoids Dawson Hwy and still arrives before the due time.",
+        "customerNoticeRequired": true,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-021",
+      "input": {
+        "load": {
+          "ref": "LM-1005",
+          "status": "delayed",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Cairns, QLD",
+          "dueAtIso": "2026-10-16T12:00:00+10:00",
+          "tonnes": 20,
+          "valueAud": 320000,
+          "perishable": true,
+          "essential": true,
+          "plannedHours": 20
+        },
+        "event": {
+          "kind": "flood",
+          "severity": "moderate",
+          "road": "Dawson Hwy",
+          "title": "Flash flooding at Biloela",
+          "radiusKm": 4,
+          "endsAtIso": "2026-10-16T06:00:00+10:00",
+          "nearestKm": 2.8
+        },
+        "detourHoursIfRerouted": 2.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "reroute",
+        "reason": "Detour of 2.5 h avoids Dawson Hwy and still arrives before the due time.",
+        "customerNoticeRequired": true,
+        "priority": "essential"
+      }
+    },
+    {
+      "id": "disruption-022",
+      "input": {
+        "load": {
+          "ref": "LM-1006",
+          "status": "delayed",
+          "originLabel": "Gladstone, QLD",
+          "destLabel": "Brisbane, QLD",
+          "dueAtIso": "2026-10-15T13:30:00+10:00",
+          "tonnes": 26,
+          "valueAud": 60000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 6.5
+        },
+        "event": {
+          "kind": "flood",
+          "severity": "major",
+          "road": "Bruce Hwy",
+          "title": "Water over road at Gympie",
+          "radiusKm": 5,
+          "endsAtIso": null,
+          "nearestKm": 3.5
+        },
+        "detourHoursIfRerouted": 2.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "hold",
+        "reason": "Only detour (2.5 h) misses the due time; hold the standard load until Bruce Hwy clears.",
+        "customerNoticeRequired": true,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-023",
+      "input": {
+        "load": {
+          "ref": "LM-1007",
+          "status": "rerouted",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Mackay, QLD",
+          "dueAtIso": "2026-10-15T19:00:00+10:00",
+          "tonnes": 16,
+          "valueAud": 140000,
+          "perishable": true,
+          "essential": false,
+          "plannedHours": 12
+        },
+        "event": {
+          "kind": "flood",
+          "severity": "major",
+          "road": "Bruce Hwy",
+          "title": "Water over road at Gympie",
+          "radiusKm": 5,
+          "endsAtIso": null,
+          "nearestKm": 3.5
+        },
+        "detourHoursIfRerouted": 2.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "escalate",
+        "reason": "Only detour (2.5 h) misses the due time and the load is perishable; needs a human call.",
+        "customerNoticeRequired": true,
+        "priority": "perishable"
+      }
+    },
+    {
+      "id": "disruption-024",
+      "input": {
+        "load": {
+          "ref": "LM-1008",
+          "status": "rerouted",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Roma, QLD",
+          "dueAtIso": "2026-10-15T13:00:00+10:00",
+          "tonnes": 21,
+          "valueAud": 70000,
+          "perishable": false,
+          "essential": true,
+          "plannedHours": 6
+        },
+        "event": {
+          "kind": "flood",
+          "severity": "major",
+          "road": "Bruce Hwy",
+          "title": "Water over road at Gympie",
+          "radiusKm": 5,
+          "endsAtIso": null,
+          "nearestKm": 3.5
+        },
+        "detourHoursIfRerouted": 2.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "escalate",
+        "reason": "Only detour (2.5 h) misses the due time and the load is essential; needs a human call.",
+        "customerNoticeRequired": true,
+        "priority": "essential"
+      }
+    },
+    {
+      "id": "disruption-025",
+      "input": {
+        "load": {
+          "ref": "LM-1001",
+          "status": "planned",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Townsville, QLD",
+          "dueAtIso": "2026-10-15T22:30:00+10:00",
+          "tonnes": 24,
+          "valueAud": 180000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 15.5
+        },
+        "event": {
+          "kind": "closure",
+          "severity": "critical",
+          "road": "Bruce Hwy",
+          "title": "Bruce Hwy closed at Rockhampton floodplain",
+          "radiusKm": 8,
+          "endsAtIso": "2026-10-16T18:00:00+10:00",
+          "nearestKm": 5.6
+        },
+        "detourHoursIfRerouted": 1.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "hold",
+        "reason": "Only detour (1.5 h) misses the due time; hold the standard load until Bruce Hwy clears.",
+        "customerNoticeRequired": true,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-026",
+      "input": {
+        "load": {
+          "ref": "LM-1002",
+          "status": "planned",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Rockhampton, QLD",
+          "dueAtIso": "2026-10-15T15:30:00+10:00",
+          "tonnes": 18,
+          "valueAud": 95000,
+          "perishable": true,
+          "essential": false,
+          "plannedHours": 8.5
+        },
+        "event": {
+          "kind": "closure",
+          "severity": "critical",
+          "road": "Bruce Hwy",
+          "title": "Bruce Hwy closed at Rockhampton floodplain",
+          "radiusKm": 8,
+          "endsAtIso": "2026-10-16T18:00:00+10:00",
+          "nearestKm": 1.6
+        },
+        "detourHoursIfRerouted": 1.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "escalate",
+        "reason": "Only detour (1.5 h) misses the due time and the load is perishable; needs a human call.",
+        "customerNoticeRequired": true,
+        "priority": "perishable"
+      }
+    },
+    {
+      "id": "disruption-027",
+      "input": {
+        "load": {
+          "ref": "LM-1003",
+          "status": "en_route",
+          "originLabel": "Toowoomba, QLD",
+          "destLabel": "Mount Isa, QLD",
+          "dueAtIso": "2026-10-16T05:00:00+10:00",
+          "tonnes": 22,
+          "valueAud": 240000,
+          "perishable": false,
+          "essential": true,
+          "plannedHours": 22
+        },
+        "event": {
+          "kind": "closure",
+          "severity": "critical",
+          "road": "Bruce Hwy",
+          "title": "Bruce Hwy closed at Rockhampton floodplain",
+          "radiusKm": 8,
+          "endsAtIso": "2026-10-16T18:00:00+10:00",
+          "nearestKm": 1.6
+        },
+        "detourHoursIfRerouted": 1.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "escalate",
+        "reason": "Critical closure on Bruce Hwy with the truck already en route inside the zone; dispatcher must direct the driver.",
+        "customerNoticeRequired": true,
+        "priority": "essential"
+      }
+    },
+    {
+      "id": "disruption-028",
+      "input": {
+        "load": {
+          "ref": "LM-1004",
+          "status": "en_route",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Gold Coast, QLD",
+          "dueAtIso": "2026-10-15T08:30:00+10:00",
+          "tonnes": 12,
+          "valueAud": 30000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 1.5
+        },
+        "event": {
+          "kind": "crash",
+          "severity": "moderate",
+          "road": "Warrego Hwy",
+          "title": "Multi-vehicle crash near Gatton",
+          "radiusKm": 3,
+          "endsAtIso": "2026-10-15T12:00:00+10:00",
+          "nearestKm": 0.6
+        },
+        "detourHoursIfRerouted": 1.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "hold",
+        "reason": "Only detour (1.5 h) misses the due time; hold the standard load until Warrego Hwy clears.",
+        "customerNoticeRequired": true,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-029",
+      "input": {
+        "load": {
+          "ref": "LM-1005",
+          "status": "delayed",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Cairns, QLD",
+          "dueAtIso": "2026-10-16T10:00:00+10:00",
+          "tonnes": 20,
+          "valueAud": 320000,
+          "perishable": true,
+          "essential": true,
+          "plannedHours": 20
+        },
+        "event": {
+          "kind": "crash",
+          "severity": "moderate",
+          "road": "Warrego Hwy",
+          "title": "Multi-vehicle crash near Gatton",
+          "radiusKm": 3,
+          "endsAtIso": "2026-10-15T12:00:00+10:00",
+          "nearestKm": 0.6
+        },
+        "detourHoursIfRerouted": null,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "escalate",
+        "reason": "No detour exists around Warrego Hwy and the load is essential; needs a human call.",
+        "customerNoticeRequired": true,
+        "priority": "essential"
+      }
+    },
+    {
+      "id": "disruption-030",
+      "input": {
+        "load": {
+          "ref": "LM-1006",
+          "status": "delayed",
+          "originLabel": "Gladstone, QLD",
+          "destLabel": "Brisbane, QLD",
+          "dueAtIso": "2026-10-15T20:30:00+10:00",
+          "tonnes": 26,
+          "valueAud": 60000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 6.5
+        },
+        "event": {
+          "kind": "crash",
+          "severity": "moderate",
+          "road": "Warrego Hwy",
+          "title": "Multi-vehicle crash near Gatton",
+          "radiusKm": 3,
+          "endsAtIso": "2026-10-15T12:00:00+10:00",
+          "nearestKm": 0.6
+        },
+        "detourHoursIfRerouted": null,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "hold",
+        "reason": "No detour exists around Warrego Hwy; hold the standard load until the event clears.",
+        "customerNoticeRequired": true,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-031",
+      "input": {
+        "load": {
+          "ref": "LM-1007",
+          "status": "rerouted",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Mackay, QLD",
+          "dueAtIso": "2026-10-16T02:00:00+10:00",
+          "tonnes": 16,
+          "valueAud": 140000,
+          "perishable": true,
+          "essential": false,
+          "plannedHours": 12
+        },
+        "event": {
+          "kind": "restriction",
+          "severity": "minor",
+          "road": "Pacific Mwy",
+          "title": "Lane closure for roadworks at Coomera",
+          "radiusKm": 3,
+          "endsAtIso": "2026-10-15T15:00:00+10:00",
+          "nearestKm": 2.7
+        },
+        "detourHoursIfRerouted": null,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "proceed",
+        "reason": "Minor restriction on Pacific Mwy; expected delay is negligible.",
+        "customerNoticeRequired": false,
+        "priority": "perishable"
+      }
+    },
+    {
+      "id": "disruption-032",
+      "input": {
+        "load": {
+          "ref": "LM-1008",
+          "status": "rerouted",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Roma, QLD",
+          "dueAtIso": "2026-10-15T20:00:00+10:00",
+          "tonnes": 21,
+          "valueAud": 70000,
+          "perishable": false,
+          "essential": true,
+          "plannedHours": 6
+        },
+        "event": {
+          "kind": "restriction",
+          "severity": "minor",
+          "road": "Pacific Mwy",
+          "title": "Lane closure for roadworks at Coomera",
+          "radiusKm": 3,
+          "endsAtIso": "2026-10-15T15:00:00+10:00",
+          "nearestKm": 2.7
+        },
+        "detourHoursIfRerouted": null,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "proceed",
+        "reason": "Minor restriction on Pacific Mwy; expected delay is negligible.",
+        "customerNoticeRequired": false,
+        "priority": "essential"
+      }
+    },
+    {
+      "id": "disruption-033",
+      "input": {
+        "load": {
+          "ref": "LM-1001",
+          "status": "planned",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Townsville, QLD",
+          "dueAtIso": "2026-10-16T05:30:00+10:00",
+          "tonnes": 24,
+          "valueAud": 180000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 15.5
+        },
+        "event": {
+          "kind": "restriction",
+          "severity": "minor",
+          "road": "Pacific Mwy",
+          "title": "Lane closure for roadworks at Coomera",
+          "radiusKm": 3,
+          "endsAtIso": "2026-10-15T15:00:00+10:00",
+          "nearestKm": 2.7
+        },
+        "detourHoursIfRerouted": 4,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "proceed",
+        "reason": "Minor restriction on Pacific Mwy; expected delay is negligible.",
+        "customerNoticeRequired": false,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-034",
+      "input": {
+        "load": {
+          "ref": "LM-1002",
+          "status": "planned",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Rockhampton, QLD",
+          "dueAtIso": "2026-10-15T22:30:00+10:00",
+          "tonnes": 18,
+          "valueAud": 95000,
+          "perishable": true,
+          "essential": false,
+          "plannedHours": 8.5
+        },
+        "event": {
+          "kind": "fire",
+          "severity": "critical",
+          "road": "Flinders Hwy",
+          "title": "Bushfire crossing Flinders Hwy near Hughenden",
+          "radiusKm": 15,
+          "endsAtIso": null,
+          "nearestKm": 13.5
+        },
+        "detourHoursIfRerouted": 4,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "reroute",
+        "reason": "Detour of 4 h avoids Flinders Hwy and still arrives before the due time.",
+        "customerNoticeRequired": true,
+        "priority": "perishable"
+      }
+    },
+    {
+      "id": "disruption-035",
+      "input": {
+        "load": {
+          "ref": "LM-1003",
+          "status": "en_route",
+          "originLabel": "Toowoomba, QLD",
+          "destLabel": "Mount Isa, QLD",
+          "dueAtIso": "2026-10-16T12:00:00+10:00",
+          "tonnes": 22,
+          "valueAud": 240000,
+          "perishable": false,
+          "essential": true,
+          "plannedHours": 22
+        },
+        "event": {
+          "kind": "fire",
+          "severity": "critical",
+          "road": "Flinders Hwy",
+          "title": "Bushfire crossing Flinders Hwy near Hughenden",
+          "radiusKm": 15,
+          "endsAtIso": null,
+          "nearestKm": 13.5
+        },
+        "detourHoursIfRerouted": 4,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "escalate",
+        "reason": "Critical fire on Flinders Hwy with the truck already en route inside the zone; dispatcher must direct the driver.",
+        "customerNoticeRequired": true,
+        "priority": "essential"
+      }
+    },
+    {
+      "id": "disruption-036",
+      "input": {
+        "load": {
+          "ref": "LM-1004",
+          "status": "en_route",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Gold Coast, QLD",
+          "dueAtIso": "2026-10-15T09:30:00+10:00",
+          "tonnes": 12,
+          "valueAud": 30000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 1.5
+        },
+        "event": {
+          "kind": "fire",
+          "severity": "critical",
+          "road": "Flinders Hwy",
+          "title": "Bushfire crossing Flinders Hwy near Hughenden",
+          "radiusKm": 15,
+          "endsAtIso": null,
+          "nearestKm": 21
+        },
+        "detourHoursIfRerouted": 4,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "proceed",
+        "reason": "Route passes 21 km from the event, outside its 15 km zone.",
+        "customerNoticeRequired": false,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-037",
+      "input": {
+        "load": {
+          "ref": "LM-1005",
+          "status": "delayed",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Cairns, QLD",
+          "dueAtIso": "2026-10-16T04:00:00+10:00",
+          "tonnes": 20,
+          "valueAud": 320000,
+          "perishable": true,
+          "essential": true,
+          "plannedHours": 20
+        },
+        "event": {
+          "kind": "weather",
+          "severity": "major",
+          "road": "Capricorn Hwy",
+          "title": "Severe thunderstorm band, 90 km/h gusts",
+          "radiusKm": 20,
+          "endsAtIso": "2026-10-15T21:00:00+10:00",
+          "nearestKm": 28
+        },
+        "detourHoursIfRerouted": 0.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "proceed",
+        "reason": "Route passes 28 km from the event, outside its 20 km zone.",
+        "customerNoticeRequired": false,
+        "priority": "essential"
+      }
+    },
+    {
+      "id": "disruption-038",
+      "input": {
+        "load": {
+          "ref": "LM-1006",
+          "status": "delayed",
+          "originLabel": "Gladstone, QLD",
+          "destLabel": "Brisbane, QLD",
+          "dueAtIso": "2026-10-15T14:30:00+10:00",
+          "tonnes": 26,
+          "valueAud": 60000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 6.5
+        },
+        "event": {
+          "kind": "weather",
+          "severity": "major",
+          "road": "Capricorn Hwy",
+          "title": "Severe thunderstorm band, 90 km/h gusts",
+          "radiusKm": 20,
+          "endsAtIso": "2026-10-15T21:00:00+10:00",
+          "nearestKm": 28
+        },
+        "detourHoursIfRerouted": 0.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "proceed",
+        "reason": "Route passes 28 km from the event, outside its 20 km zone.",
+        "customerNoticeRequired": false,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-039",
+      "input": {
+        "load": {
+          "ref": "LM-1007",
+          "status": "rerouted",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Mackay, QLD",
+          "dueAtIso": "2026-10-15T20:00:00+10:00",
+          "tonnes": 16,
+          "valueAud": 140000,
+          "perishable": true,
+          "essential": false,
+          "plannedHours": 12
+        },
+        "event": {
+          "kind": "weather",
+          "severity": "major",
+          "road": "Capricorn Hwy",
+          "title": "Severe thunderstorm band, 90 km/h gusts",
+          "radiusKm": 20,
+          "endsAtIso": "2026-10-15T21:00:00+10:00",
+          "nearestKm": 28
+        },
+        "detourHoursIfRerouted": 0.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "proceed",
+        "reason": "Route passes 28 km from the event, outside its 20 km zone.",
+        "customerNoticeRequired": false,
+        "priority": "perishable"
+      }
+    },
+    {
+      "id": "disruption-040",
+      "input": {
+        "load": {
+          "ref": "LM-1008",
+          "status": "rerouted",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Roma, QLD",
+          "dueAtIso": "2026-10-15T14:00:00+10:00",
+          "tonnes": 21,
+          "valueAud": 70000,
+          "perishable": false,
+          "essential": true,
+          "plannedHours": 6
+        },
+        "event": {
+          "kind": "flood",
+          "severity": "moderate",
+          "road": "Dawson Hwy",
+          "title": "Flash flooding at Biloela",
+          "radiusKm": 4,
+          "endsAtIso": "2026-10-16T06:00:00+10:00",
+          "nearestKm": 5.6
+        },
+        "detourHoursIfRerouted": 0.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "proceed",
+        "reason": "Route passes 5.6 km from the event, outside its 4 km zone.",
+        "customerNoticeRequired": false,
+        "priority": "essential"
+      }
+    },
+    {
+      "id": "disruption-041",
+      "input": {
+        "load": {
+          "ref": "LM-1001",
+          "status": "planned",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Townsville, QLD",
+          "dueAtIso": "2026-10-15T23:30:00+10:00",
+          "tonnes": 24,
+          "valueAud": 180000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 15.5
+        },
+        "event": {
+          "kind": "flood",
+          "severity": "moderate",
+          "road": "Dawson Hwy",
+          "title": "Flash flooding at Biloela",
+          "radiusKm": 4,
+          "endsAtIso": "2026-10-16T06:00:00+10:00",
+          "nearestKm": 2
+        },
+        "detourHoursIfRerouted": 9,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "hold",
+        "reason": "Only detour (9 h) misses the due time; hold the standard load until Dawson Hwy clears.",
+        "customerNoticeRequired": true,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-042",
+      "input": {
+        "load": {
+          "ref": "LM-1002",
+          "status": "planned",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Rockhampton, QLD",
+          "dueAtIso": "2026-10-15T16:30:00+10:00",
+          "tonnes": 18,
+          "valueAud": 95000,
+          "perishable": true,
+          "essential": false,
+          "plannedHours": 8.5
+        },
+        "event": {
+          "kind": "flood",
+          "severity": "moderate",
+          "road": "Dawson Hwy",
+          "title": "Flash flooding at Biloela",
+          "radiusKm": 4,
+          "endsAtIso": "2026-10-16T06:00:00+10:00",
+          "nearestKm": 2
+        },
+        "detourHoursIfRerouted": 9,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "escalate",
+        "reason": "Only detour (9 h) misses the due time and the load is perishable; needs a human call.",
+        "customerNoticeRequired": true,
+        "priority": "perishable"
+      }
+    },
+    {
+      "id": "disruption-043",
+      "input": {
+        "load": {
+          "ref": "LM-1003",
+          "status": "en_route",
+          "originLabel": "Toowoomba, QLD",
+          "destLabel": "Mount Isa, QLD",
+          "dueAtIso": "2026-10-16T09:00:00+10:00",
+          "tonnes": 22,
+          "valueAud": 240000,
+          "perishable": false,
+          "essential": true,
+          "plannedHours": 22
+        },
+        "event": {
+          "kind": "flood",
+          "severity": "major",
+          "road": "Bruce Hwy",
+          "title": "Water over road at Gympie",
+          "radiusKm": 5,
+          "endsAtIso": null,
+          "nearestKm": 2.5
+        },
+        "detourHoursIfRerouted": 9,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "escalate",
+        "reason": "Only detour (9 h) misses the due time and the load is essential; needs a human call.",
+        "customerNoticeRequired": true,
+        "priority": "essential"
+      }
+    },
+    {
+      "id": "disruption-044",
+      "input": {
+        "load": {
+          "ref": "LM-1004",
+          "status": "en_route",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Gold Coast, QLD",
+          "dueAtIso": "2026-10-15T12:30:00+10:00",
+          "tonnes": 12,
+          "valueAud": 30000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 1.5
+        },
+        "event": {
+          "kind": "flood",
+          "severity": "major",
+          "road": "Bruce Hwy",
+          "title": "Water over road at Gympie",
+          "radiusKm": 5,
+          "endsAtIso": null,
+          "nearestKm": 2.5
+        },
+        "detourHoursIfRerouted": 9,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "hold",
+        "reason": "Only detour (9 h) misses the due time; hold the standard load until Bruce Hwy clears.",
+        "customerNoticeRequired": true,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-045",
+      "input": {
+        "load": {
+          "ref": "LM-1005",
+          "status": "delayed",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Cairns, QLD",
+          "dueAtIso": "2026-10-16T07:00:00+10:00",
+          "tonnes": 20,
+          "valueAud": 320000,
+          "perishable": true,
+          "essential": true,
+          "plannedHours": 20
+        },
+        "event": {
+          "kind": "flood",
+          "severity": "major",
+          "road": "Bruce Hwy",
+          "title": "Water over road at Gympie",
+          "radiusKm": 5,
+          "endsAtIso": null,
+          "nearestKm": 2.5
+        },
+        "detourHoursIfRerouted": 2.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "reroute",
+        "reason": "Detour of 2.5 h avoids Bruce Hwy and still arrives before the due time.",
+        "customerNoticeRequired": true,
+        "priority": "essential"
+      }
+    },
+    {
+      "id": "disruption-046",
+      "input": {
+        "load": {
+          "ref": "LM-1006",
+          "status": "delayed",
+          "originLabel": "Gladstone, QLD",
+          "destLabel": "Brisbane, QLD",
+          "dueAtIso": "2026-10-15T17:30:00+10:00",
+          "tonnes": 26,
+          "valueAud": 60000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 6.5
+        },
+        "event": {
+          "kind": "closure",
+          "severity": "critical",
+          "road": "Bruce Hwy",
+          "title": "Bruce Hwy closed at Rockhampton floodplain",
+          "radiusKm": 8,
+          "endsAtIso": "2026-10-16T18:00:00+10:00",
+          "nearestKm": 5.6
+        },
+        "detourHoursIfRerouted": 2.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "reroute",
+        "reason": "Detour of 2.5 h avoids Bruce Hwy and still arrives before the due time.",
+        "customerNoticeRequired": true,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-047",
+      "input": {
+        "load": {
+          "ref": "LM-1007",
+          "status": "rerouted",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Mackay, QLD",
+          "dueAtIso": "2026-10-15T23:00:00+10:00",
+          "tonnes": 16,
+          "valueAud": 140000,
+          "perishable": true,
+          "essential": false,
+          "plannedHours": 12
+        },
+        "event": {
+          "kind": "closure",
+          "severity": "critical",
+          "road": "Bruce Hwy",
+          "title": "Bruce Hwy closed at Rockhampton floodplain",
+          "radiusKm": 8,
+          "endsAtIso": "2026-10-16T18:00:00+10:00",
+          "nearestKm": 5.6
+        },
+        "detourHoursIfRerouted": 2.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "reroute",
+        "reason": "Detour of 2.5 h avoids Bruce Hwy and still arrives before the due time.",
+        "customerNoticeRequired": true,
+        "priority": "perishable"
+      }
+    },
+    {
+      "id": "disruption-048",
+      "input": {
+        "load": {
+          "ref": "LM-1008",
+          "status": "rerouted",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Roma, QLD",
+          "dueAtIso": "2026-10-15T17:00:00+10:00",
+          "tonnes": 21,
+          "valueAud": 70000,
+          "perishable": false,
+          "essential": true,
+          "plannedHours": 6
+        },
+        "event": {
+          "kind": "closure",
+          "severity": "critical",
+          "road": "Bruce Hwy",
+          "title": "Bruce Hwy closed at Rockhampton floodplain",
+          "radiusKm": 8,
+          "endsAtIso": "2026-10-16T18:00:00+10:00",
+          "nearestKm": 5.6
+        },
+        "detourHoursIfRerouted": 2.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "reroute",
+        "reason": "Detour of 2.5 h avoids Bruce Hwy and still arrives before the due time.",
+        "customerNoticeRequired": true,
+        "priority": "essential"
+      }
+    },
+    {
+      "id": "disruption-049",
+      "input": {
+        "load": {
+          "ref": "LM-1001",
+          "status": "planned",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Townsville, QLD",
+          "dueAtIso": "2026-10-16T02:30:00+10:00",
+          "tonnes": 24,
+          "valueAud": 180000,
+          "perishable": false,
+          "essential": false,
+          "plannedHours": 15.5
+        },
+        "event": {
+          "kind": "crash",
+          "severity": "moderate",
+          "road": "Warrego Hwy",
+          "title": "Multi-vehicle crash near Gatton",
+          "radiusKm": 3,
+          "endsAtIso": "2026-10-15T12:00:00+10:00",
+          "nearestKm": 2.1
+        },
+        "detourHoursIfRerouted": 1.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "reroute",
+        "reason": "Detour of 1.5 h avoids Warrego Hwy and still arrives before the due time.",
+        "customerNoticeRequired": true,
+        "priority": "standard"
+      }
+    },
+    {
+      "id": "disruption-050",
+      "input": {
+        "load": {
+          "ref": "LM-1002",
+          "status": "planned",
+          "originLabel": "Brisbane, QLD",
+          "destLabel": "Rockhampton, QLD",
+          "dueAtIso": "2026-10-16T00:30:00+10:00",
+          "tonnes": 18,
+          "valueAud": 95000,
+          "perishable": true,
+          "essential": false,
+          "plannedHours": 8.5
+        },
+        "event": {
+          "kind": "crash",
+          "severity": "moderate",
+          "road": "Warrego Hwy",
+          "title": "Multi-vehicle crash near Gatton",
+          "radiusKm": 3,
+          "endsAtIso": "2026-10-15T12:00:00+10:00",
+          "nearestKm": 2.1
+        },
+        "detourHoursIfRerouted": 1.5,
+        "nowIso": "2026-10-15T06:00:00+10:00"
+      },
+      "expected": {
+        "decision": "reroute",
+        "reason": "Detour of 1.5 h avoids Warrego Hwy and still arrives before the due time.",
+        "customerNoticeRequired": true,
+        "priority": "perishable"
+      }
+    }
+  ]
+}

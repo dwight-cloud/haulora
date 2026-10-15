@@ -156,10 +156,16 @@ export interface TruckRouteResult {
   alternates: TruckRouteOption[];
 }
 
+export interface TruckRouteOpts {
+  /** HERE `avoid[areas]` value, e.g. "bbox:west,south,east,north|bbox:..." */
+  avoidAreas?: string;
+}
+
 export async function truckRoute(
   origin: LatLon,
   destination: LatLon,
   profile: TruckProfile,
+  opts: TruckRouteOpts = {},
 ): Promise<TruckRouteResult> {
   const params = new URLSearchParams({
     transportMode: "truck",
@@ -181,6 +187,7 @@ export async function truckRoute(
   if (profile.axleCount)    params.set("vehicle[axleCount]", String(profile.axleCount));
   if (profile.hazardous)    params.set("vehicle[shippedHazardousGoods]", "explosive");
   if (profile.trailerCount) params.set("vehicle[trailerCount]", String(profile.trailerCount));
+  if (opts.avoidAreas)      params.set("avoid[areas]", opts.avoidAreas);
 
   const res = await fetch(`${HERE.routing}?${params.toString()}`, { cache: "no-store" });
   if (!res.ok) {
@@ -215,8 +222,8 @@ export async function truckRoute(
     );
   }
 
-  const opts = routes.map(routeToOption);
-  return { origin, destination, primary: opts[0], alternates: opts.slice(1) };
+  const options = routes.map(routeToOption);
+  return { origin, destination, primary: options[0], alternates: options.slice(1) };
 }
 
 function haversineKm(a: LatLon, b: LatLon): number {

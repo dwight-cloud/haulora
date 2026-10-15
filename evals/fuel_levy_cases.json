@@ -1,0 +1,1360 @@
+{
+  "version": 1,
+  "generatedBy": "evals/generate_fuel_cases.ts (seed 20261015)",
+  "tolerances": {
+    "levyPct": 0.05
+  },
+  "rules": {
+    "levyPct": "((currentCpl - levyBaseCpl) / levyBaseCpl) * levyFuelShare * 100, clamped at 0, rounded to 2 dp; fixed -> levyCurrentPct; none -> 0",
+    "shouldPropose": "|levyPct - levyCurrentPct| >= 0.5 percentage points",
+    "riskLevel": "|weekly revenue delta| < 500 low, < 3000 medium, else high (delta = baseRatePerKm * weeklyKm * (levyPct - levyCurrentPct) / 100)",
+    "noticeRequired": "shouldPropose && levyMethod === 'indexed'",
+    "error": "indexed method with levyBaseCpl missing or 0 must be reported as an error"
+  },
+  "cases": [
+    {
+      "id": "fuel-001",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Darling Downs Grain",
+          "baseRatePerKm": 2.75,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 180.5,
+          "levyFuelShare": 0.33,
+          "levyCurrentPct": 7.2,
+          "weeklyKm": 6300,
+          "levyNoticeDays": 30
+        },
+        "currentCpl": 219.9,
+        "previousCpl": 211.8,
+        "region": "Rockhampton",
+        "todayIso": "2026-10-15"
+      },
+      "expected": {
+        "levyPct": 7.2,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "Indexed levy; diesel 211.8 -> 219.9 c/L; current levy 7.2% vs indexed 7.2%."
+      }
+    },
+    {
+      "id": "fuel-002",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Moreton Bay Cold Chain",
+          "baseRatePerKm": 3.45,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 172.5,
+          "levyFuelShare": 0.4,
+          "levyCurrentPct": 0,
+          "weeklyKm": 7800,
+          "levyNoticeDays": 30
+        },
+        "currentCpl": 173.5,
+        "previousCpl": 164.5,
+        "region": "Townsville",
+        "todayIso": "2026-10-08"
+      },
+      "expected": {
+        "levyPct": 0.23,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "Indexed levy; diesel 164.5 -> 173.5 c/L; current levy 0% vs indexed 0.23%."
+      }
+    },
+    {
+      "id": "fuel-003",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Gladstone Steel Supplies",
+          "baseRatePerKm": 3,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 190,
+          "levyFuelShare": 0.33,
+          "levyCurrentPct": 0,
+          "weeklyKm": 2400,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 200,
+        "previousCpl": 185.1,
+        "region": "Toowoomba",
+        "todayIso": "2026-10-08"
+      },
+      "expected": {
+        "levyPct": 1.74,
+        "shouldPropose": true,
+        "riskLevel": "low",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 185.1 -> 200 c/L; current levy 0% vs indexed 1.74%."
+      }
+    },
+    {
+      "id": "fuel-004",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Lockyer Valley Produce",
+          "baseRatePerKm": 2.2,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 195.5,
+          "levyFuelShare": 0.33,
+          "levyCurrentPct": 2.67,
+          "weeklyKm": 7150,
+          "levyNoticeDays": 30
+        },
+        "currentCpl": 282.4,
+        "previousCpl": 278,
+        "region": "Townsville",
+        "todayIso": "2026-10-08"
+      },
+      "expected": {
+        "levyPct": 14.67,
+        "shouldPropose": true,
+        "riskLevel": "medium",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 278 -> 282.4 c/L; current levy 2.67% vs indexed 14.67%."
+      }
+    },
+    {
+      "id": "fuel-005",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Toowoomba Building Co",
+          "baseRatePerKm": 2.75,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 185,
+          "levyFuelShare": 0.28,
+          "levyCurrentPct": 14.54,
+          "weeklyKm": 8450,
+          "levyNoticeDays": 14
+        },
+        "currentCpl": 314.1,
+        "previousCpl": 303.4,
+        "region": "Brisbane",
+        "todayIso": "2026-10-08"
+      },
+      "expected": {
+        "levyPct": 19.54,
+        "shouldPropose": true,
+        "riskLevel": "medium",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 303.4 -> 314.1 c/L; current levy 14.54% vs indexed 19.54%."
+      }
+    },
+    {
+      "id": "fuel-006",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Sunshine Coast Beverages",
+          "baseRatePerKm": 4.1,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 161,
+          "levyFuelShare": 0.31,
+          "levyCurrentPct": 9.57,
+          "weeklyKm": 1350,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 304.2,
+        "previousCpl": 293.5,
+        "region": "Brisbane",
+        "todayIso": "2026-10-15"
+      },
+      "expected": {
+        "levyPct": 27.57,
+        "shouldPropose": true,
+        "riskLevel": "medium",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 293.5 -> 304.2 c/L; current levy 9.57% vs indexed 27.57%."
+      }
+    },
+    {
+      "id": "fuel-007",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Mackay Sugar Haulage",
+          "baseRatePerKm": 3.55,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 171.5,
+          "levyFuelShare": 0.38,
+          "levyCurrentPct": 27.08,
+          "weeklyKm": 6550,
+          "levyNoticeDays": 14
+        },
+        "currentCpl": 329.8,
+        "previousCpl": 321.2,
+        "region": "Brisbane",
+        "todayIso": "2026-10-14"
+      },
+      "expected": {
+        "levyPct": 35.08,
+        "shouldPropose": true,
+        "riskLevel": "medium",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 321.2 -> 329.8 c/L; current levy 27.08% vs indexed 35.08%."
+      }
+    },
+    {
+      "id": "fuel-008",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Ipswich Pallet Freight",
+          "baseRatePerKm": 2,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 178.5,
+          "levyFuelShare": 0.27,
+          "levyCurrentPct": 0,
+          "weeklyKm": 11000,
+          "levyNoticeDays": 14
+        },
+        "currentCpl": 171.5,
+        "previousCpl": 163.4,
+        "region": "Townsville",
+        "todayIso": "2026-10-14"
+      },
+      "expected": {
+        "levyPct": 0,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "Indexed levy; diesel 163.4 -> 171.5 c/L; current levy 0% vs indexed 0%."
+      }
+    },
+    {
+      "id": "fuel-009",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Wide Bay Timber",
+          "baseRatePerKm": 1.85,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 173,
+          "levyFuelShare": 0.32,
+          "levyCurrentPct": 6.03,
+          "weeklyKm": 1000,
+          "levyNoticeDays": 14
+        },
+        "currentCpl": 213.7,
+        "previousCpl": 196.6,
+        "region": "QLD",
+        "todayIso": "2026-10-08"
+      },
+      "expected": {
+        "levyPct": 7.53,
+        "shouldPropose": true,
+        "riskLevel": "low",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 196.6 -> 213.7 c/L; current levy 6.03% vs indexed 7.53%."
+      }
+    },
+    {
+      "id": "fuel-010",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Gold Coast Retail Group",
+          "baseRatePerKm": 3.55,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 187.5,
+          "levyFuelShare": 0.29,
+          "levyCurrentPct": 0,
+          "weeklyKm": 11100,
+          "levyNoticeDays": 30
+        },
+        "currentCpl": 187.2,
+        "previousCpl": 163.4,
+        "region": "Rockhampton",
+        "todayIso": "2026-10-08"
+      },
+      "expected": {
+        "levyPct": 0,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "Indexed levy; diesel 163.4 -> 187.2 c/L; current levy 0% vs indexed 0%."
+      }
+    },
+    {
+      "id": "fuel-011",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Roma Livestock Transport",
+          "baseRatePerKm": 2.85,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 182,
+          "levyFuelShare": 0.28,
+          "levyCurrentPct": 15.55,
+          "weeklyKm": 6050,
+          "levyNoticeDays": 30
+        },
+        "currentCpl": 288.3,
+        "previousCpl": 281.4,
+        "region": "QLD",
+        "todayIso": "2026-10-08"
+      },
+      "expected": {
+        "levyPct": 16.35,
+        "shouldPropose": true,
+        "riskLevel": "low",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 281.4 -> 288.3 c/L; current levy 15.55% vs indexed 16.35%."
+      }
+    },
+    {
+      "id": "fuel-012",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Townsville Mining Services",
+          "baseRatePerKm": 2.1,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 173,
+          "levyFuelShare": 0.39,
+          "levyCurrentPct": 26.2,
+          "weeklyKm": 3550,
+          "levyNoticeDays": 14
+        },
+        "currentCpl": 311.4,
+        "previousCpl": 307.2,
+        "region": "Toowoomba",
+        "todayIso": "2026-10-15"
+      },
+      "expected": {
+        "levyPct": 31.2,
+        "shouldPropose": true,
+        "riskLevel": "low",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 307.2 -> 311.4 c/L; current levy 26.2% vs indexed 31.2%."
+      }
+    },
+    {
+      "id": "fuel-013",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Bundaberg Fresh",
+          "baseRatePerKm": 3.45,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 175,
+          "levyFuelShare": 0.3,
+          "levyCurrentPct": 5.37,
+          "weeklyKm": 2800,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 208.1,
+        "previousCpl": 200.1,
+        "region": "QLD",
+        "todayIso": "2026-10-15"
+      },
+      "expected": {
+        "levyPct": 5.67,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "Indexed levy; diesel 200.1 -> 208.1 c/L; current levy 5.37% vs indexed 5.67%."
+      }
+    },
+    {
+      "id": "fuel-014",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Cairns Pharma Distribution",
+          "baseRatePerKm": 3.75,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 175,
+          "levyFuelShare": 0.33,
+          "levyCurrentPct": 0.98,
+          "weeklyKm": 10700,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 196.1,
+        "previousCpl": 192.4,
+        "region": "Rockhampton",
+        "todayIso": "2026-10-14"
+      },
+      "expected": {
+        "levyPct": 3.98,
+        "shouldPropose": true,
+        "riskLevel": "medium",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 192.4 -> 196.1 c/L; current levy 0.98% vs indexed 3.98%."
+      }
+    },
+    {
+      "id": "fuel-015",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Rockhampton Beef Exports",
+          "baseRatePerKm": 3.9,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 166,
+          "levyFuelShare": 0.33,
+          "levyCurrentPct": 5.4,
+          "weeklyKm": 950,
+          "levyNoticeDays": 14
+        },
+        "currentCpl": 318.9,
+        "previousCpl": 304.7,
+        "region": "QLD",
+        "todayIso": "2026-10-13"
+      },
+      "expected": {
+        "levyPct": 30.4,
+        "shouldPropose": true,
+        "riskLevel": "medium",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 304.7 -> 318.9 c/L; current levy 5.4% vs indexed 30.4%."
+      }
+    },
+    {
+      "id": "fuel-016",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Logan Furniture Depot",
+          "baseRatePerKm": 2.05,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 181.5,
+          "levyFuelShare": 0.27,
+          "levyCurrentPct": 15.52,
+          "weeklyKm": 6450,
+          "levyNoticeDays": 30
+        },
+        "currentCpl": 306,
+        "previousCpl": 303.2,
+        "region": "Townsville",
+        "todayIso": "2026-10-15"
+      },
+      "expected": {
+        "levyPct": 18.52,
+        "shouldPropose": true,
+        "riskLevel": "low",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 303.2 -> 306 c/L; current levy 15.52% vs indexed 18.52%."
+      }
+    },
+    {
+      "id": "fuel-017",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Warwick Feed Mills",
+          "baseRatePerKm": 2.35,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 196,
+          "levyFuelShare": 0.4,
+          "levyCurrentPct": 13.92,
+          "weeklyKm": 2800,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 278.9,
+        "previousCpl": 262.6,
+        "region": "Townsville",
+        "todayIso": "2026-10-08"
+      },
+      "expected": {
+        "levyPct": 16.92,
+        "shouldPropose": true,
+        "riskLevel": "low",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 262.6 -> 278.9 c/L; current levy 13.92% vs indexed 16.92%."
+      }
+    },
+    {
+      "id": "fuel-018",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Hervey Bay Marine",
+          "baseRatePerKm": 3.55,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 170.5,
+          "levyFuelShare": 0.26,
+          "levyCurrentPct": 11.1,
+          "weeklyKm": 2650,
+          "levyNoticeDays": 14
+        },
+        "currentCpl": 253.1,
+        "previousCpl": 239,
+        "region": "Rockhampton",
+        "todayIso": "2026-10-08"
+      },
+      "expected": {
+        "levyPct": 12.6,
+        "shouldPropose": true,
+        "riskLevel": "low",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 239 -> 253.1 c/L; current levy 11.1% vs indexed 12.6%."
+      }
+    },
+    {
+      "id": "fuel-019",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Emerald Agri Supplies",
+          "baseRatePerKm": 3.9,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 178,
+          "levyFuelShare": 0.38,
+          "levyCurrentPct": 2.86,
+          "weeklyKm": 6300,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 247.6,
+        "previousCpl": 239.8,
+        "region": "Brisbane",
+        "todayIso": "2026-10-14"
+      },
+      "expected": {
+        "levyPct": 14.86,
+        "shouldPropose": true,
+        "riskLevel": "medium",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 239.8 -> 247.6 c/L; current levy 2.86% vs indexed 14.86%."
+      }
+    },
+    {
+      "id": "fuel-020",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Noosa Food Services",
+          "baseRatePerKm": 1.9,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 186.5,
+          "levyFuelShare": 0.38,
+          "levyCurrentPct": 16.96,
+          "weeklyKm": 1400,
+          "levyNoticeDays": 30
+        },
+        "currentCpl": 309,
+        "previousCpl": 299.5,
+        "region": "QLD",
+        "todayIso": "2026-10-09"
+      },
+      "expected": {
+        "levyPct": 24.96,
+        "shouldPropose": true,
+        "riskLevel": "low",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 299.5 -> 309 c/L; current levy 16.96% vs indexed 24.96%."
+      }
+    },
+    {
+      "id": "fuel-021",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Darling Downs Grain",
+          "baseRatePerKm": 3.25,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 197,
+          "levyFuelShare": 0.26,
+          "levyCurrentPct": 8.95,
+          "weeklyKm": 11250,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 270.9,
+        "previousCpl": 250.2,
+        "region": "Rockhampton",
+        "todayIso": "2026-10-13"
+      },
+      "expected": {
+        "levyPct": 9.75,
+        "shouldPropose": true,
+        "riskLevel": "low",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 250.2 -> 270.9 c/L; current levy 8.95% vs indexed 9.75%."
+      }
+    },
+    {
+      "id": "fuel-022",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Moreton Bay Cold Chain",
+          "baseRatePerKm": 3.65,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 186.5,
+          "levyFuelShare": 0.4,
+          "levyCurrentPct": 0,
+          "weeklyKm": 7900,
+          "levyNoticeDays": 14
+        },
+        "currentCpl": 175.9,
+        "previousCpl": 152.1,
+        "region": "Townsville",
+        "todayIso": "2026-10-14"
+      },
+      "expected": {
+        "levyPct": 0,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "Indexed levy; diesel 152.1 -> 175.9 c/L; current levy 0% vs indexed 0%."
+      }
+    },
+    {
+      "id": "fuel-023",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Gladstone Steel Supplies",
+          "baseRatePerKm": 2.55,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 193.5,
+          "levyFuelShare": 0.27,
+          "levyCurrentPct": 15.79,
+          "weeklyKm": 700,
+          "levyNoticeDays": 14
+        },
+        "currentCpl": 308.8,
+        "previousCpl": 288.4,
+        "region": "QLD",
+        "todayIso": "2026-10-13"
+      },
+      "expected": {
+        "levyPct": 16.09,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "Indexed levy; diesel 288.4 -> 308.8 c/L; current levy 15.79% vs indexed 16.09%."
+      }
+    },
+    {
+      "id": "fuel-024",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Lockyer Valley Produce",
+          "baseRatePerKm": 4.15,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 182,
+          "levyFuelShare": 0.31,
+          "levyCurrentPct": 1.05,
+          "weeklyKm": 5550,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 217.5,
+        "previousCpl": 195.7,
+        "region": "QLD",
+        "todayIso": "2026-10-09"
+      },
+      "expected": {
+        "levyPct": 6.05,
+        "shouldPropose": true,
+        "riskLevel": "medium",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 195.7 -> 217.5 c/L; current levy 1.05% vs indexed 6.05%."
+      }
+    },
+    {
+      "id": "fuel-025",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Toowoomba Building Co",
+          "baseRatePerKm": 3.6,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 161,
+          "levyFuelShare": 0.39,
+          "levyCurrentPct": 33.98,
+          "weeklyKm": 3450,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 321.9,
+        "previousCpl": 310.4,
+        "region": "Toowoomba",
+        "todayIso": "2026-10-15"
+      },
+      "expected": {
+        "levyPct": 38.98,
+        "shouldPropose": true,
+        "riskLevel": "medium",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 310.4 -> 321.9 c/L; current levy 33.98% vs indexed 38.98%."
+      }
+    },
+    {
+      "id": "fuel-026",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Sunshine Coast Beverages",
+          "baseRatePerKm": 3.45,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 180,
+          "levyFuelShare": 0.32,
+          "levyCurrentPct": 18.46,
+          "weeklyKm": 5550,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 300.7,
+        "previousCpl": 287.7,
+        "region": "QLD",
+        "todayIso": "2026-10-12"
+      },
+      "expected": {
+        "levyPct": 21.46,
+        "shouldPropose": true,
+        "riskLevel": "medium",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 287.7 -> 300.7 c/L; current levy 18.46% vs indexed 21.46%."
+      }
+    },
+    {
+      "id": "fuel-027",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Mackay Sugar Haulage",
+          "baseRatePerKm": 3.6,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 168,
+          "levyFuelShare": 0.31,
+          "levyCurrentPct": 23.63,
+          "weeklyKm": 3000,
+          "levyNoticeDays": 14
+        },
+        "currentCpl": 297.7,
+        "previousCpl": 274.4,
+        "region": "QLD",
+        "todayIso": "2026-10-08"
+      },
+      "expected": {
+        "levyPct": 23.93,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "Indexed levy; diesel 274.4 -> 297.7 c/L; current levy 23.63% vs indexed 23.93%."
+      }
+    },
+    {
+      "id": "fuel-028",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Ipswich Pallet Freight",
+          "baseRatePerKm": 3.9,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 192.5,
+          "levyFuelShare": 0.34,
+          "levyCurrentPct": 2.87,
+          "weeklyKm": 17750,
+          "levyNoticeDays": 30
+        },
+        "currentCpl": 322,
+        "previousCpl": 307.3,
+        "region": "Brisbane",
+        "todayIso": "2026-10-08"
+      },
+      "expected": {
+        "levyPct": 22.87,
+        "shouldPropose": true,
+        "riskLevel": "high",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 307.3 -> 322 c/L; current levy 2.87% vs indexed 22.87%."
+      }
+    },
+    {
+      "id": "fuel-029",
+      "kind": "rise",
+      "input": {
+        "customer": {
+          "name": "Wide Bay Timber",
+          "baseRatePerKm": 3.9,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 163.5,
+          "levyFuelShare": 0.27,
+          "levyCurrentPct": 3.43,
+          "weeklyKm": 18000,
+          "levyNoticeDays": 14
+        },
+        "currentCpl": 305.4,
+        "previousCpl": 286.2,
+        "region": "Brisbane",
+        "todayIso": "2026-10-12"
+      },
+      "expected": {
+        "levyPct": 23.43,
+        "shouldPropose": true,
+        "riskLevel": "high",
+        "noticeRequired": true,
+        "notes": "Indexed levy; diesel 286.2 -> 305.4 c/L; current levy 3.43% vs indexed 23.43%."
+      }
+    },
+    {
+      "id": "fuel-030",
+      "kind": "no_change",
+      "input": {
+        "customer": {
+          "name": "Ipswich Pallet Freight",
+          "baseRatePerKm": 2.9,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 188,
+          "levyFuelShare": 0.28,
+          "levyCurrentPct": 2.19,
+          "weeklyKm": 6150,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 202.7,
+        "previousCpl": 200.4,
+        "region": "Townsville",
+        "todayIso": "2026-10-15"
+      },
+      "expected": {
+        "levyPct": 2.19,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "No change: current levy 2.19% is within 0.5 pp of indexed 2.19%."
+      }
+    },
+    {
+      "id": "fuel-031",
+      "kind": "no_change",
+      "input": {
+        "customer": {
+          "name": "Wide Bay Timber",
+          "baseRatePerKm": 3.45,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 191.5,
+          "levyFuelShare": 0.26,
+          "levyCurrentPct": 0,
+          "weeklyKm": 9150,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 180.9,
+        "previousCpl": 182.1,
+        "region": "QLD",
+        "todayIso": "2026-10-14"
+      },
+      "expected": {
+        "levyPct": 0,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "No change: current levy 0% is within 0.5 pp of indexed 0%."
+      }
+    },
+    {
+      "id": "fuel-032",
+      "kind": "no_change",
+      "input": {
+        "customer": {
+          "name": "Gold Coast Retail Group",
+          "baseRatePerKm": 2.9,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 185.5,
+          "levyFuelShare": 0.39,
+          "levyCurrentPct": 21.64,
+          "weeklyKm": 9300,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 289.4,
+        "previousCpl": 292.4,
+        "region": "QLD",
+        "todayIso": "2026-10-09"
+      },
+      "expected": {
+        "levyPct": 21.84,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "No change: current levy 21.64% is within 0.5 pp of indexed 21.84%."
+      }
+    },
+    {
+      "id": "fuel-033",
+      "kind": "no_change",
+      "input": {
+        "customer": {
+          "name": "Roma Livestock Transport",
+          "baseRatePerKm": 3.55,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 169.5,
+          "levyFuelShare": 0.31,
+          "levyCurrentPct": 19.92,
+          "weeklyKm": 5200,
+          "levyNoticeDays": 30
+        },
+        "currentCpl": 276.8,
+        "previousCpl": 277.2,
+        "region": "Rockhampton",
+        "todayIso": "2026-10-13"
+      },
+      "expected": {
+        "levyPct": 19.62,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "No change: current levy 19.92% is within 0.5 pp of indexed 19.62%."
+      }
+    },
+    {
+      "id": "fuel-034",
+      "kind": "no_change",
+      "input": {
+        "customer": {
+          "name": "Townsville Mining Services",
+          "baseRatePerKm": 2.65,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 177,
+          "levyFuelShare": 0.31,
+          "levyCurrentPct": 11.45,
+          "weeklyKm": 4600,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 241.8,
+        "previousCpl": 242.2,
+        "region": "Brisbane",
+        "todayIso": "2026-10-14"
+      },
+      "expected": {
+        "levyPct": 11.35,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "No change: current levy 11.45% is within 0.5 pp of indexed 11.35%."
+      }
+    },
+    {
+      "id": "fuel-035",
+      "kind": "no_change",
+      "input": {
+        "customer": {
+          "name": "Bundaberg Fresh",
+          "baseRatePerKm": 2.25,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 196,
+          "levyFuelShare": 0.25,
+          "levyCurrentPct": 6.33,
+          "weeklyKm": 9850,
+          "levyNoticeDays": 14
+        },
+        "currentCpl": 245.6,
+        "previousCpl": 245.3,
+        "region": "Rockhampton",
+        "todayIso": "2026-10-08"
+      },
+      "expected": {
+        "levyPct": 6.33,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "No change: current levy 6.33% is within 0.5 pp of indexed 6.33%."
+      }
+    },
+    {
+      "id": "fuel-036",
+      "kind": "no_change",
+      "input": {
+        "customer": {
+          "name": "Cairns Pharma Distribution",
+          "baseRatePerKm": 1.9,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 184,
+          "levyFuelShare": 0.3,
+          "levyCurrentPct": 9.92,
+          "weeklyKm": 3000,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 243,
+        "previousCpl": 244.9,
+        "region": "Townsville",
+        "todayIso": "2026-10-12"
+      },
+      "expected": {
+        "levyPct": 9.62,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "No change: current levy 9.92% is within 0.5 pp of indexed 9.62%."
+      }
+    },
+    {
+      "id": "fuel-037",
+      "kind": "no_change",
+      "input": {
+        "customer": {
+          "name": "Rockhampton Beef Exports",
+          "baseRatePerKm": 3.3,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 178,
+          "levyFuelShare": 0.39,
+          "levyCurrentPct": 16.5,
+          "weeklyKm": 1100,
+          "levyNoticeDays": 30
+        },
+        "currentCpl": 254.2,
+        "previousCpl": 256.8,
+        "region": "Brisbane",
+        "todayIso": "2026-10-09"
+      },
+      "expected": {
+        "levyPct": 16.7,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "No change: current levy 16.5% is within 0.5 pp of indexed 16.7%."
+      }
+    },
+    {
+      "id": "fuel-038",
+      "kind": "price_fall",
+      "input": {
+        "customer": {
+          "name": "Cairns Pharma Distribution",
+          "baseRatePerKm": 2.45,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 162,
+          "levyFuelShare": 0.31,
+          "levyCurrentPct": 29.7,
+          "weeklyKm": 8200,
+          "levyNoticeDays": 14
+        },
+        "currentCpl": 272.1,
+        "previousCpl": 317.2,
+        "region": "QLD",
+        "todayIso": "2026-10-12"
+      },
+      "expected": {
+        "levyPct": 21.07,
+        "shouldPropose": true,
+        "riskLevel": "medium",
+        "noticeRequired": true,
+        "notes": "Price fall 317.2 -> 272.1 c/L; levy should drop from 29.7% to 21.07%."
+      }
+    },
+    {
+      "id": "fuel-039",
+      "kind": "price_fall",
+      "input": {
+        "customer": {
+          "name": "Rockhampton Beef Exports",
+          "baseRatePerKm": 2.9,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 193.5,
+          "levyFuelShare": 0.35,
+          "levyCurrentPct": 14.54,
+          "weeklyKm": 5900,
+          "levyNoticeDays": 30
+        },
+        "currentCpl": 243.2,
+        "previousCpl": 273.9,
+        "region": "Townsville",
+        "todayIso": "2026-10-13"
+      },
+      "expected": {
+        "levyPct": 8.99,
+        "shouldPropose": true,
+        "riskLevel": "medium",
+        "noticeRequired": true,
+        "notes": "Price fall 273.9 -> 243.2 c/L; levy should drop from 14.54% to 8.99%."
+      }
+    },
+    {
+      "id": "fuel-040",
+      "kind": "price_fall",
+      "input": {
+        "customer": {
+          "name": "Logan Furniture Depot",
+          "baseRatePerKm": 2,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 190,
+          "levyFuelShare": 0.37,
+          "levyCurrentPct": 14.27,
+          "weeklyKm": 9600,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 217,
+        "previousCpl": 263.3,
+        "region": "Townsville",
+        "todayIso": "2026-10-08"
+      },
+      "expected": {
+        "levyPct": 5.26,
+        "shouldPropose": true,
+        "riskLevel": "medium",
+        "noticeRequired": true,
+        "notes": "Price fall 263.3 -> 217 c/L; levy should drop from 14.27% to 5.26%."
+      }
+    },
+    {
+      "id": "fuel-041",
+      "kind": "price_fall",
+      "input": {
+        "customer": {
+          "name": "Warwick Feed Mills",
+          "baseRatePerKm": 3,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 186.5,
+          "levyFuelShare": 0.34,
+          "levyCurrentPct": 17.34,
+          "weeklyKm": 3400,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 253.2,
+        "previousCpl": 281.6,
+        "region": "Toowoomba",
+        "todayIso": "2026-10-08"
+      },
+      "expected": {
+        "levyPct": 12.16,
+        "shouldPropose": true,
+        "riskLevel": "medium",
+        "noticeRequired": true,
+        "notes": "Price fall 281.6 -> 253.2 c/L; levy should drop from 17.34% to 12.16%."
+      }
+    },
+    {
+      "id": "fuel-042",
+      "kind": "price_fall",
+      "input": {
+        "customer": {
+          "name": "Hervey Bay Marine",
+          "baseRatePerKm": 1.8,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 188,
+          "levyFuelShare": 0.27,
+          "levyCurrentPct": 13,
+          "weeklyKm": 3450,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 183,
+        "previousCpl": 278.5,
+        "region": "Toowoomba",
+        "todayIso": "2026-10-15"
+      },
+      "expected": {
+        "levyPct": 0,
+        "shouldPropose": true,
+        "riskLevel": "medium",
+        "noticeRequired": true,
+        "notes": "Price fall below base: indexed levy clamps at 0% (no negative levy); current 13%."
+      }
+    },
+    {
+      "id": "fuel-043",
+      "kind": "none",
+      "input": {
+        "customer": {
+          "name": "Lockyer Valley Produce",
+          "baseRatePerKm": 2.45,
+          "levyMethod": "none",
+          "levyBaseCpl": 191,
+          "levyFuelShare": 0.3,
+          "levyCurrentPct": 0,
+          "weeklyKm": 4750,
+          "levyNoticeDays": 14
+        },
+        "currentCpl": 306.2,
+        "previousCpl": 281.4,
+        "region": "Toowoomba",
+        "todayIso": "2026-10-12"
+      },
+      "expected": {
+        "levyPct": 0,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "Contract has no fuel levy clause: levy is 0% and no proposal regardless of price."
+      }
+    },
+    {
+      "id": "fuel-044",
+      "kind": "none",
+      "input": {
+        "customer": {
+          "name": "Toowoomba Building Co",
+          "baseRatePerKm": 4.1,
+          "levyMethod": "none",
+          "levyBaseCpl": 179.5,
+          "levyFuelShare": 0.36,
+          "levyCurrentPct": 0,
+          "weeklyKm": 4150,
+          "levyNoticeDays": 14
+        },
+        "currentCpl": 295.5,
+        "previousCpl": 283.7,
+        "region": "Rockhampton",
+        "todayIso": "2026-10-09"
+      },
+      "expected": {
+        "levyPct": 0,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "Contract has no fuel levy clause: levy is 0% and no proposal regardless of price."
+      }
+    },
+    {
+      "id": "fuel-045",
+      "kind": "none",
+      "input": {
+        "customer": {
+          "name": "Sunshine Coast Beverages",
+          "baseRatePerKm": 4.1,
+          "levyMethod": "none",
+          "levyBaseCpl": null,
+          "levyFuelShare": 0.38,
+          "levyCurrentPct": 0,
+          "weeklyKm": 3600,
+          "levyNoticeDays": 14
+        },
+        "currentCpl": 294.6,
+        "previousCpl": 287,
+        "region": "Townsville",
+        "todayIso": "2026-10-09"
+      },
+      "expected": {
+        "levyPct": 0,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "Contract has no fuel levy clause: levy is 0% and no proposal regardless of price."
+      }
+    },
+    {
+      "id": "fuel-046",
+      "kind": "fixed",
+      "input": {
+        "customer": {
+          "name": "Warwick Feed Mills",
+          "baseRatePerKm": 4.15,
+          "levyMethod": "fixed",
+          "levyBaseCpl": 160.5,
+          "levyFuelShare": 0.37,
+          "levyCurrentPct": 8.5,
+          "weeklyKm": 5050,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 322.9,
+        "previousCpl": 313.3,
+        "region": "Townsville",
+        "todayIso": "2026-10-14"
+      },
+      "expected": {
+        "levyPct": 8.5,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "Fixed levy at 8.5% by contract; price moves do not change it."
+      }
+    },
+    {
+      "id": "fuel-047",
+      "kind": "fixed",
+      "input": {
+        "customer": {
+          "name": "Hervey Bay Marine",
+          "baseRatePerKm": 1.95,
+          "levyMethod": "fixed",
+          "levyBaseCpl": 188,
+          "levyFuelShare": 0.27,
+          "levyCurrentPct": 10,
+          "weeklyKm": 8800,
+          "levyNoticeDays": 14
+        },
+        "currentCpl": 314.3,
+        "previousCpl": 295.4,
+        "region": "Brisbane",
+        "todayIso": "2026-10-14"
+      },
+      "expected": {
+        "levyPct": 10,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "Fixed levy at 10% by contract; price moves do not change it."
+      }
+    },
+    {
+      "id": "fuel-048",
+      "kind": "fixed",
+      "input": {
+        "customer": {
+          "name": "Emerald Agri Supplies",
+          "baseRatePerKm": 3.75,
+          "levyMethod": "fixed",
+          "levyBaseCpl": 175.5,
+          "levyFuelShare": 0.4,
+          "levyCurrentPct": 5,
+          "weeklyKm": 7700,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 248.5,
+        "previousCpl": 228.6,
+        "region": "QLD",
+        "todayIso": "2026-10-14"
+      },
+      "expected": {
+        "levyPct": 5,
+        "shouldPropose": false,
+        "riskLevel": "low",
+        "noticeRequired": false,
+        "notes": "Fixed levy at 5% by contract; price moves do not change it."
+      }
+    },
+    {
+      "id": "fuel-049",
+      "kind": "malformed",
+      "input": {
+        "customer": {
+          "name": "Malformed Missing Base Pty Ltd",
+          "baseRatePerKm": 3.65,
+          "levyMethod": "indexed",
+          "levyBaseCpl": null,
+          "levyFuelShare": 0.3,
+          "levyCurrentPct": 4,
+          "weeklyKm": 550,
+          "levyNoticeDays": 30
+        },
+        "currentCpl": 281,
+        "previousCpl": 286.8,
+        "region": "QLD",
+        "todayIso": "2026-10-15"
+      },
+      "expected": {
+        "error": true,
+        "notes": "Indexed method but levyBaseCpl is missing: agent must flag the contract, not propose."
+      }
+    },
+    {
+      "id": "fuel-050",
+      "kind": "malformed",
+      "input": {
+        "customer": {
+          "name": "Malformed Zero Base Pty Ltd",
+          "baseRatePerKm": 1.9,
+          "levyMethod": "indexed",
+          "levyBaseCpl": 0,
+          "levyFuelShare": 0.3,
+          "levyCurrentPct": 4,
+          "weeklyKm": 7800,
+          "levyNoticeDays": 7
+        },
+        "currentCpl": 281,
+        "previousCpl": 286.8,
+        "region": "QLD",
+        "todayIso": "2026-10-15"
+      },
+      "expected": {
+        "error": true,
+        "notes": "Indexed method but levyBaseCpl is 0: division by zero; agent must flag, not propose."
+      }
+    }
+  ]
+}
