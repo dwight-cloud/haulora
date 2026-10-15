@@ -42,19 +42,16 @@ async function main() {
   const live = process.argv.includes("--live");
   const { db } = await import("../lib/db");
   const { genId } = await import("../lib/domain/schema");
-  const { DEFAULT_MODEL, costUsd } = await import("../lib/agents/runtime");
+  const { DEFAULT_MODEL, costUsd, chat, parseJsonObject, hasKey } = await import("../lib/llm");
   const model = live ? DEFAULT_MODEL : "rules";
-  const openai = live ? new (await import("openai")).default({ apiKey: process.env.OPENAI_API_KEY }) : null;
+  const openai = live && hasKey() ? true : null;
   let totalIn = 0, totalOut = 0;
 
   async function ask<T>(system: string, user: string): Promise<{ out: T; ms: number }> {
     const t0 = Date.now();
-    const res = await openai!.chat.completions.create({
-      model: DEFAULT_MODEL, messages: [{ role: "system", content: system }, { role: "user", content: user }],
-      response_format: { type: "json_object" }, max_completion_tokens: 300,
-    });
-    totalIn += res.usage?.prompt_tokens ?? 0; totalOut += res.usage?.completion_tokens ?? 0;
-    return { out: JSON.parse(res.choices[0].message.content ?? "{}") as T, ms: Date.now() - t0 };
+    const turn = await chat({ model: DEFAULT_MODEL, system, messages: [{ role: "user", content: user }], maxTokens: 300, jsonOnly: true });
+    totalIn += turn.usage.input; totalOut += turn.usage.output;
+    return { out: parseJsonObject<T>(turn.text), ms: Date.now() - t0 };
   }
 
   const suites: Array<{ suite: string; results: CaseResult[]; latencies: number[] }> = [];

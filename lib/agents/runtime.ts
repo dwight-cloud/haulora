@@ -18,44 +18,22 @@
  *   - Mock mode when no API key is configured: the agent's scripted plan runs
  *     the same tools against the same data so the UI and evals still work.
  */
-import OpenAI from "openai";
-import type { ChatCompletionMessageParam, ChatCompletionTool } from "openai/resources/chat/completions";
+import { chat, costUsd as llmCost, DEFAULT_MODEL as LLM_DEFAULT_MODEL, hasKey, priceFor as llmPrice, type LlmMessage, type LlmTool } from "../llm";
 import { db } from "../db";
 import { createRun, appendStep, finishRun, getRunWithSteps } from "../domain/repo";
 import type { AgentName, AgentRun, AgentStep } from "../domain/types";
 
-// ---------- Models and pricing ----------
+// ---------- Models and pricing (see lib/llm.ts) ----------
 
-export const DEFAULT_MODEL = process.env.OPENAI_MODEL ?? "gpt-5.4-mini-2026-03-17";
-
-/** USD per 1M tokens. Overridable with OPENAI_PRICE_IN / OPENAI_PRICE_OUT. */
-const PRICE_TABLE: Record<string, { in: number; out: number }> = {
-  "gpt-5.4-mini-2026-03-17": { in: 0.25, out: 2.0 },
-  "gpt-5.4-mini":            { in: 0.25, out: 2.0 },
-  "gpt-5.4-2026-03-05":      { in: 1.25, out: 10.0 },
-  "gpt-5.4":                 { in: 1.25, out: 10.0 },
-  "gpt-5-mini":              { in: 0.25, out: 2.0 },
-  "gpt-4.1-mini":            { in: 0.40, out: 1.6 },
-  "gpt-4.1":                 { in: 2.00, out: 8.0 },
-};
-
-export function priceFor(model: string): { in: number; out: number } {
-  const envIn = Number(process.env.OPENAI_PRICE_IN);
-  const envOut = Number(process.env.OPENAI_PRICE_OUT);
-  if (envIn > 0 && envOut > 0) return { in: envIn, out: envOut };
-  return PRICE_TABLE[model] ?? PRICE_TABLE[model.replace(/-\d{4}-\d{2}-\d{2}$/, "")] ?? { in: 1, out: 4 };
-}
-
-export function costUsd(model: string, inputTokens: number, outputTokens: number): number {
-  const p = priceFor(model);
-  return (inputTokens * p.in + outputTokens * p.out) / 1_000_000;
-}
+export const DEFAULT_MODEL = LLM_DEFAULT_MODEL;
+export const priceFor = llmPrice;
+export const costUsd = llmCost;
 
 // ---------- Caps ----------
 
 export const CAPS = {
   maxSteps: Number(process.env.AGENT_MAX_STEPS ?? 12),
-  maxRunCostUsd: Number(process.env.AGENT_MAX_RUN_COST_USD ?? 0.25),
+  maxRunCostUsd: Number(process.env.AGENT_MAX_RUN_COST_USD ?? 0.6),
   dailySpendCapUsd: Number(process.env.AGENT_DAILY_SPEND_CAP_USD ?? 5),
 };
 
@@ -136,11 +114,8 @@ function validateArgs(tool: ToolDef, args: unknown): string | null {
   return null;
 }
 
-function toOpenAITools(tools: ToolDef[]): ChatCompletionTool[] {
-  return tools.map((t) => ({
-    type: "function",
-    function: { name: t.name, description: `[${t.risk}] ${t.description}`, parameters: t.parameters },
-  }));
+function toLlmTools(tools: ToolDef[]): LlmTool[] {
+  return tools.map((t) => ({ name: t.name, description: `[${t.risk}] ${t.description}`, parameters: t.parameters }));
 }
 
 function truncate(v: unknown, max = 6000): unknown {
@@ -152,7 +127,7 @@ function truncate(v: unknown, max = 6000): unknown {
 // ---------- The loop ----------
 
 export function isMockMode(): boolean {
-  return process.env.MOCK_AGENTS === "1" || !process.env.OPENAI_API_KEY;
+  return process.env.MOCK_AGENTS === "1" || !hasKey();
 }
 
 export async function runAgent(
@@ -229,48 +204,30 @@ export async function runAgent(
   }
 
   // ----- Live path -----
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const messages: ChatCompletionMessageParam[] = [
-    { role: "system", content: spec.system },
-    { role: "user", content: input.userMessage },
-  ];
-  const tools = toOpenAITools(spec.tools);
+  const messages: LlmMessage[] = [{ role: "user", content: input.userMessage }];
+  const tools = toLlmTools(spec.tools);
 
   try {
     for (let step = 0; step < maxSteps; step++) {
-      const res = await client.chat.completions.create({
-        model,
-        messages,
-        tools,
-        tool_choice: "auto",
-        max_completion_tokens: 1800,
-      });
-      const usage = res.usage;
-      if (usage) {
-        inputTokens += usage.prompt_tokens ?? 0;
-        outputTokens += usage.completion_tokens ?? 0;
-        cost = costUsd(model, inputTokens, outputTokens);
-      }
-      const choice = res.choices[0];
-      const msg = choice.message;
+      const turn = await chat({ model, system: spec.system, messages, tools, maxTokens: 1800 });
+      inputTokens += turn.usage.input;
+      outputTokens += turn.usage.output;
+      cost = costUsd(model, inputTokens, outputTokens);
 
-      if (msg.content && msg.content.trim()) {
-        appendStep(run.id, msg.tool_calls?.length ? "thought" : "final", null, { text: msg.content });
+      if (turn.text) {
+        appendStep(run.id, turn.toolCalls.length ? "thought" : "final", null, { text: turn.text });
       }
 
-      if (!msg.tool_calls || msg.tool_calls.length === 0) {
-        const summary = [msg.content ?? "", ...ctx.notes].filter(Boolean).join("\n");
+      if (turn.toolCalls.length === 0) {
+        const summary = [turn.text, ...ctx.notes].filter(Boolean).join("\n");
         return finish("completed", summary);
       }
 
-      messages.push(msg);
-      for (const tc of msg.tool_calls) {
-        if (tc.type !== "function") continue;
-        let args: unknown = {};
-        try { args = JSON.parse(tc.function.arguments || "{}"); }
-        catch { appendStep(run.id, "guardrail", "bad_json", { tool: tc.function.name, raw: tc.function.arguments }); }
-        const result = await callTool(tc.function.name, args);
-        messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(truncate(result)) });
+      messages.push({ role: "assistant", content: turn.text, toolCalls: turn.toolCalls });
+      for (const tc of turn.toolCalls) {
+        if (tc.args === null) appendStep(run.id, "guardrail", "bad_json", { tool: tc.name, raw: tc.rawArgs });
+        const result = await callTool(tc.name, tc.args ?? {});
+        messages.push({ role: "tool", toolCallId: tc.id, content: JSON.stringify(truncate(result)) });
       }
 
       if (cost >= maxCost) {

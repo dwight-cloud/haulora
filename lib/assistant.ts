@@ -8,8 +8,7 @@ import { latestDieselPrice } from "./au/fuel-prices";
 import { listActiveEvents } from "./au/road-events";
 import { listActions, listCustomers, listLoads, listRuns, listTrucks, getRunWithSteps } from "./domain/repo";
 import { CAPS, DEFAULT_MODEL, isMockMode, spendLast24h } from "./agents/runtime";
-import OpenAI from "openai";
-import type { ChatCompletionMessageParam, ChatCompletionTool } from "openai/resources/chat/completions";
+import { chat, costUsd, type LlmMessage, type LlmTool } from "./llm";
 import { db } from "./db";
 import { genId } from "./domain/schema";
 
@@ -71,28 +70,28 @@ Speak like a helpful colleague, never like a manual. Use these plain words and, 
 - "driver cover" and "driving-hours rules", never "capacity" or "fatigue management"
 The page names are: Overview, Trucks, Delivery jobs, Customers, Road problems, Your decisions, AI helpers, Accuracy tests, How it works. When the user asks what to click, give a numbered path of two or three clicks with page names. Never claim an action was taken; you can only read. If asked something outside Haulora, say so briefly.`;
 
-type Tool = { def: ChatCompletionTool; run: (args: Record<string, unknown>, accountId: string) => unknown };
+type Tool = { def: LlmTool; run: (args: Record<string, unknown>, accountId: string) => unknown };
 
 const tools: Tool[] = [
-  { def: { type: "function", function: { name: "fleet_snapshot", description: "Current counts: trucks by status, loads by status, diesel price, active disruptions, decisions pending, last 24h model spend.", parameters: { type: "object", properties: {} } } },
+  { def: { name: "fleet_snapshot", description: "Current counts: trucks by status, loads by status, diesel price, active disruptions, decisions pending, last 24h model spend.", parameters: { type: "object", properties: {} } },
     run: (_a, accountId) => {
       const trucks = listTrucks(accountId); const loads = listLoads(accountId);
       const by = <T,>(xs: T[], k: (x: T) => string) => xs.reduce<Record<string, number>>((m, x) => { m[k(x)] = (m[k(x)] ?? 0) + 1; return m; }, {});
       const pending = listActions(accountId, "proposed");
       return { trucks: by(trucks, (t) => t.status), loads: by(loads, (l) => l.status), diesel: latestDieselPrice(accountId), activeDisruptions: listActiveEvents(accountId).map((e) => ({ title: e.title, severity: e.severity, road: e.road })), decisionsPending: pending.length, pendingImpactAud: pending.reduce((s, a) => s + a.impactAud, 0), spend24hUsd: spendLast24h(), caps: CAPS };
     } },
-  { def: { type: "function", function: { name: "pending_decisions", description: "Proposals waiting for the dispatcher: agent, title, risk, A$ impact, description.", parameters: { type: "object", properties: {} } } },
+  { def: { name: "pending_decisions", description: "Proposals waiting for the dispatcher: agent, title, risk, A$ impact, description.", parameters: { type: "object", properties: {} } },
     run: (_a, accountId) => listActions(accountId, "proposed").slice(0, 10).map((a) => ({ agent: a.agent, title: a.title, risk: a.risk, impactAud: a.impactAud, description: a.description })) },
-  { def: { type: "function", function: { name: "last_run", description: "The most recent agent run: which agent, why it woke, what it concluded, and the human-readable steps.", parameters: { type: "object", properties: {} } } },
+  { def: { name: "last_run", description: "The most recent agent run: which agent, why it woke, what it concluded, and the human-readable steps.", parameters: { type: "object", properties: {} } },
     run: (_a, accountId) => {
       const run = listRuns(accountId, 1)[0]; if (!run) return { none: true };
       const full = getRunWithSteps(run.id);
       const steps = (full?.steps ?? []).filter((s) => s.kind === "tool_call" || s.kind === "final" || s.kind === "guardrail").slice(0, 25).map((s) => ({ kind: s.kind, name: s.name, payload: JSON.stringify(s.payload).slice(0, 300) }));
       return { agent: run.agent, trigger: run.trigger, status: run.status, summary: run.summary, costUsd: run.costUsd, toolCalls: run.toolCalls, steps };
     } },
-  { def: { type: "function", function: { name: "customers", description: "Customers with their fuel levy contract terms and the levy currently applied.", parameters: { type: "object", properties: {} } } },
+  { def: { name: "customers", description: "Customers with their fuel levy contract terms and the levy currently applied.", parameters: { type: "object", properties: {} } },
     run: (_a, accountId) => listCustomers(accountId).map((c) => ({ name: c.name, levyMethod: c.levyMethod, levyBaseCpl: c.levyBaseCpl, levyCurrentPct: c.levyCurrentPct, weeklyKm: c.weeklyKm, baseRatePerKm: c.baseRatePerKm })) },
-  { def: { type: "function", function: { name: "loads_at_risk", description: "Loads that are delayed, held, rerouted, or essential/perishable and in flight.", parameters: { type: "object", properties: {} } } },
+  { def: { name: "loads_at_risk", description: "Loads that are delayed, held, rerouted, or essential/perishable and in flight.", parameters: { type: "object", properties: {} } },
     run: (_a, accountId) => listLoads(accountId).filter((l) => ["delayed", "held", "rerouted"].includes(l.status) || ((l.essential || l.perishable) && ["planned", "en_route"].includes(l.status))).slice(0, 12).map((l) => ({ ref: l.ref, status: l.status, from: l.originLabel, to: l.destLabel, dueAtIso: new Date(l.dueAt).toISOString(), essential: l.essential, perishable: l.perishable, valueAud: l.valueAud, replanReason: l.replanReason })) },
 ];
 
@@ -112,32 +111,28 @@ export async function askAssistant(args: { accountId: string; question: string; 
     return { answer: "The daily model budget for this demo is used up. The pages still work; try again tomorrow or raise the cap.", costUsd: 0, mock: false, suggestions };
   }
 
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const messages: ChatCompletionMessageParam[] = [
-    { role: "system", content: SYSTEM + (pageHint ? `\n\nThe user is currently on this page: ${pageHint}` : "") },
-    ...(args.history ?? []).slice(-6).map((h) => ({ role: h.role, content: h.content }) as ChatCompletionMessageParam),
+  const system = SYSTEM + (pageHint ? `\n\nThe user is currently on this page: ${pageHint}` : "");
+  const messages: LlmMessage[] = [
+    ...(args.history ?? []).slice(-6).map((h) => (h.role === "user" ? { role: "user" as const, content: h.content } : { role: "assistant" as const, content: h.content })),
     { role: "user", content: question },
   ];
   let inTok = 0, outTok = 0;
   for (let i = 0; i < 4; i++) {
-    const res = await client.chat.completions.create({ model: DEFAULT_MODEL, messages, tools: tools.map((t) => t.def), tool_choice: "auto", max_completion_tokens: 500 });
-    inTok += res.usage?.prompt_tokens ?? 0; outTok += res.usage?.completion_tokens ?? 0;
-    const msg = res.choices[0].message;
-    if (!msg.tool_calls?.length) {
-      const answer = (msg.content ?? "").trim() || "I could not form an answer. Try asking what to click first.";
-      const { costUsd } = await import("./agents/runtime");
+    const turn = await chat({ model: DEFAULT_MODEL, system, messages, tools: tools.map((t) => t.def), maxTokens: 600 });
+    inTok += turn.usage.input; outTok += turn.usage.output;
+    if (turn.toolCalls.length === 0) {
+      const answer = turn.text || "I could not form an answer. Try asking what to click first.";
       const cost = costUsd(DEFAULT_MODEL, inTok, outTok);
       db.prepare("INSERT INTO assistant_turns (id, account_id, page, question, answer, input_tokens, output_tokens, cost_usd, created_at) VALUES (?,?,?,?,?,?,?,?,?)")
         .run(genId("ask"), accountId, args.page ?? null, question, answer, inTok, outTok, cost, Date.now());
       return { answer, costUsd: cost, mock: false, suggestions };
     }
-    messages.push(msg);
-    for (const tc of msg.tool_calls) {
-      if (tc.type !== "function") continue;
-      const tool = tools.find((t) => t.def.type === "function" && t.def.function.name === tc.function.name);
+    messages.push({ role: "assistant", content: turn.text, toolCalls: turn.toolCalls });
+    for (const tc of turn.toolCalls) {
+      const tool = tools.find((t) => t.def.name === tc.name);
       let result: unknown = { error: "unknown tool" };
-      try { result = tool ? tool.run(JSON.parse(tc.function.arguments || "{}"), accountId) : result; } catch (e) { result = { error: e instanceof Error ? e.message : String(e) }; }
-      messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(result).slice(0, 6000) });
+      try { result = tool ? tool.run((tc.args ?? {}) as Record<string, unknown>, accountId) : result; } catch (e) { result = { error: e instanceof Error ? e.message : String(e) }; }
+      messages.push({ role: "tool", toolCallId: tc.id, content: JSON.stringify(result).slice(0, 6000) });
     }
   }
   return { answer: "That took more steps than I allow myself. Ask a narrower question.", costUsd: 0, mock: false, suggestions };

@@ -25,7 +25,7 @@ Dispatcher UI (Next.js)
 API routes (/api/scenarios, /api/agents/run, /api/actions, …)
    │
    ▼
-Agent runtime (lib/agents/runtime.ts)        OpenAI chat completions, tool calling
+Agent runtime (lib/agents/runtime.ts)        Claude Opus 5.5 via the Anthropic SDK, tool use (lib/llm.ts adapter)
    │  step cap · per-run cost cap · 24h spend cap · argument validation · trace
    ├── tools rated "read" ──► SQLite domain · HERE Routing v8 · Open-Meteo · QLDTraffic · BoM
    └── tools rated "propose" ──► actions table ──► approval queue ──► executor (deterministic)
@@ -37,12 +37,12 @@ Agents have no "execute" tools. The executor is the only code that changes a rat
 
 ```bash
 npm install
-cp .env.example .env.local        # fill in OPENAI_API_KEY and HERE_API_KEY
+cp .env.example .env.local        # fill in ANTHROPIC_API_KEY (+ ANTHROPIC_WORKSPACE_ID for user-scoped keys) and HERE_API_KEY
 npm run seed:warm                 # seeds the Brisbane fleet, then fetches real HERE truck routes for 20 loads
 npm run dev                       # http://localhost:3000 → "Open the live demo"
 ```
 
-Without an `OPENAI_API_KEY` the agents run in mock mode: the same tools and data, a scripted plan instead of the model, so the UI and evals still work.
+Without an `ANTHROPIC_API_KEY` the agents run in mock mode: the same tools and data, a scripted plan instead of the model, so the UI and evals still work.
 
 Useful scripts:
 
@@ -77,9 +77,9 @@ Single Docker host, Caddy on port 80, SQLite bind-mounted at `./data`.
 
 ## Governance and cost
 
-- Model pinned by ID in `lib/agents/runtime.ts` (`OPENAI_MODEL` to override). Pricing table in the same file; override with `OPENAI_PRICE_IN` / `OPENAI_PRICE_OUT`.
+- Model pinned by ID in `lib/llm.ts` (`ANTHROPIC_MODEL` to override; `LLM_PROVIDER=openai` switches provider). Pricing table in the same file; override with `LLM_PRICE_IN` / `LLM_PRICE_OUT`.
 - Caps: `AGENT_MAX_STEPS`, `AGENT_MAX_RUN_COST_USD`, `AGENT_DAILY_SPEND_CAP_USD`. Scenario and run endpoints are rate limited per visitor.
-- Observed on the live model: a fuel run costs about US$0.004 and takes 10 s; a disruption run with HERE detours about US$0.008 and 20 s.
+- Observed on Claude Opus 5.5: a fuel check costs about US$0.12 and takes 25 s; a road-problem check with HERE detours about US$0.09 and 22 s.
 - Every step of every run is stored (`agent_steps`) and shown in the trace viewer. Guardrail events (bad arguments, caps) are visible, not hidden.
 
 ## Limitations
