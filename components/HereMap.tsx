@@ -171,6 +171,9 @@ export function HereMap({
         center: { lat: c.lat, lng: c.lon },
         zoom,
         pixelRatio: window.devicePixelRatio || 1,
+        // The unpinned 3.1 CDN build now defaults to the HARP engine, which
+        // does not draw ImageTileProvider raster layers. Classic WebGL does.
+        engineType: H.Map.EngineType.WEBGL,
       });
       mapRef.current = map;
       new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
