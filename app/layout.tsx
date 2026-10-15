@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Drover — AI dispatcher copilot for Australian road freight",
+  title: "Haulio — AI dispatcher copilot for Australian road freight",
   description:
     "Agentic fuel, disruption and capacity decisions for small and mid-size Australian road freight operators.",
 };

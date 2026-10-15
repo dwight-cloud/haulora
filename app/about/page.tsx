@@ -2,7 +2,7 @@ import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { Card, CardBody, CardHeader, CardTitle, Pill } from "@/components/ui/primitives";
 
-export const metadata = { title: "How it works — Drover" };
+export const metadata = { title: "How it works — Haulio" };
 
 export default function AboutPage() {
   return (

@@ -89,7 +89,7 @@ function LoginForm() {
           </div>
 
           <div className="text-xs text-offwhite/50">
-            © {new Date().getFullYear()} Drover · <Link href="/privacy" className="hover:text-ink-900">Privacy</Link> · <Link href="/terms" className="hover:text-ink-900">Terms</Link>
+            © {new Date().getFullYear()} Haulio · <Link href="/privacy" className="hover:text-ink-900">Privacy</Link> · <Link href="/terms" className="hover:text-ink-900">Terms</Link>
           </div>
         </div>
       </aside>

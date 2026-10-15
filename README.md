@@ -1,4 +1,4 @@
-# Drover
+# Haulio
 
 An AI dispatcher copilot for small and mid-size Australian road freight operators. Three agents watch the three things squeezing a 5 to 50 truck fleet in 2026: diesel, road disruption, and driver capacity. Each one reads live and seeded data, decides with a deterministic engine, and **proposes**. A dispatcher approves. Low-risk housekeeping (customer notices, review flags) executes on its own.
 
@@ -57,8 +57,8 @@ npm run agent scenario:bruce_cut
 Single Docker host, Caddy on port 80, SQLite bind-mounted at `./data`.
 
 ```bash
-./deploy.sh user@host /opt/drover --with-data   # first time: ships routes, evals, history
-./deploy.sh user@host /opt/drover               # code-only redeploy
+./deploy.sh user@host /opt/haulio --with-data   # first time: ships routes, evals, history
+./deploy.sh user@host /opt/haulio               # code-only redeploy
 ```
 
 ## Data sources
