@@ -179,6 +179,7 @@ export function DashboardClient({ apiKey, accountName }: { apiKey: string; accou
                   Haulora keeps your trucks, delivery jobs, customers and road problems in one place.
                   Three <Term t="agent">AI helpers</Term> watch diesel prices, road closures and who is free to drive, work out what to do and write up a <Term t="proposal" /> with the numbers.
                   Nothing changes until you accept it on the Your decisions page.
+                  Drivers use a phone app on the same system; open it from the Driver app link to report a road problem and watch the office side react.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button size="sm" tone="accent" icon={<Compass />} onClick={() => window.dispatchEvent(new CustomEvent("haulora:tour:start"))}>Show me around</Button>

@@ -1,0 +1,14 @@
+{
+  "name": "Haulora Driver",
+  "short_name": "Haulora",
+  "description": "Today's delivery jobs, updates from dispatch, and a one-tap way to report a road problem.",
+  "start_url": "/driver",
+  "scope": "/driver",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7F4EE",
+  "theme_color": "#1C1A17",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

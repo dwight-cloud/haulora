@@ -3,6 +3,8 @@ import { ArrowRight, Fuel, TriangleAlert, Users, Check } from "lucide-react";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { DemoButton } from "@/components/DemoButton";
+import { DriverAppButton } from "@/components/DriverAppButton";
+import { getSession } from "@/lib/auth";
 import { Mark, BRAND_TAGLINE } from "@/components/Logo";
 import { Eyebrow, Pill } from "@/components/ui/primitives";
 import { Term } from "@/components/Term";
@@ -47,7 +49,8 @@ const REAL = [
   { k: "Road closures", v: "Made up, or from a demo button", tone: "warning" as const },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const session = await getSession();
   return (
     <>
       <Nav />
@@ -82,6 +85,10 @@ export default function LandingPage() {
               >
                 How it works <ArrowRight className="h-4 w-4" />
               </Link>
+              <DriverAppButton
+                signedIn={!!session}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-white/20 px-5 text-[15px] font-semibold text-white transition hover:bg-white/10 disabled:opacity-60"
+              />
             </div>
           </div>
         </section>

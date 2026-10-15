@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   Bot, BookOpen, CheckSquare, ClipboardList, FileBarChart, LayoutGrid, MapPinned,
-  Network, Package, Route, TriangleAlert, Truck, Users, Building2,
+  Network, Package, Route, Smartphone, TriangleAlert, Truck, Users, Building2,
 } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { listActions } from "@/lib/domain/repo";
@@ -69,6 +69,7 @@ export async function Nav() {
           <SideLink href="/disruptions" icon={<TriangleAlert />}>Road problems</SideLink>
           <SideLink href="/decisions"   icon={<CheckSquare />} badge={pending}>Your decisions</SideLink>
           <SideLink href="/agents"      icon={<Bot />}>AI helpers</SideLink>
+          <SideLink href="/driver-preview" icon={<Smartphone />} small>Driver app</SideLink>
 
           <SectionLabel className="mt-5" small>For engineers</SectionLabel>
           <SideLink href="/evals" icon={<FileBarChart />} small>Accuracy tests</SideLink>
