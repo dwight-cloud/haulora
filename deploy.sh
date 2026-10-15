@@ -17,14 +17,14 @@ rsync -az --delete \
   ./ "$HOST:$REMOTE_DIR/"
 
 echo "→ Shipping environment (.env.local → .env)"
-scp -q .env.local "$HOST:$REMOTE_DIR/.env"
+rsync -az .env.local "$HOST:$REMOTE_DIR/.env"
 ssh "$HOST" "chmod 600 $REMOTE_DIR/.env"
 
 if [[ "$WITH_DATA" == "--with-data" ]]; then
   echo "→ Shipping database"
   sqlite3 data/copilot.db "PRAGMA wal_checkpoint(TRUNCATE);" 2>/dev/null || true
   ssh "$HOST" "mkdir -p $REMOTE_DIR/data"
-  scp -q data/copilot.db "$HOST:$REMOTE_DIR/data/logisticmind.db"
+  rsync -az data/copilot.db "$HOST:$REMOTE_DIR/data/logisticmind.db"
 fi
 # The container runs as uid 1001; the bind-mounted data dir must be writable by it.
 ssh "$HOST" "mkdir -p $REMOTE_DIR/data && sudo chown -R 1001:1001 $REMOTE_DIR/data"
