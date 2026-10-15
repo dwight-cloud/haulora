@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ExternalLink, Smartphone } from "lucide-react";
 
-const PHONE_URL = "http://13.229.87.89/driver";
+const PHONE_URL = typeof window !== "undefined" ? `${window.location.origin}/driver` : "/driver";
 const W = 390, H = 844;
 
 export function PreviewClient() {

@@ -1,7 +1,12 @@
-# Demo is served on a bare IP over HTTP. No TLS: certificates for IP addresses
-# are impractical, and a reviewer clicking a link does not need one.
-:80 {
+# Public demo host with automatic HTTPS (Let's Encrypt via the HTTP-01 challenge on port 80).
+apptestforteohcapital.isddynamics.com {
 	encode zstd gzip
 	header -Server
+	header Strict-Transport-Security "max-age=31536000"
 	reverse_proxy web:3000
+}
+
+# Anyone hitting the bare IP is sent to the named host.
+http://13.229.87.89 {
+	redir https://apptestforteohcapital.isddynamics.com{uri} permanent
 }

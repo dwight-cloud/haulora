@@ -58,7 +58,7 @@ npm run agent scenario:bruce_cut
 
 ## Deploy
 
-Single Docker host, Caddy on port 80, SQLite bind-mounted at `./data`.
+Single Docker host, Caddy with automatic HTTPS for the host named in the Caddyfile, SQLite bind-mounted at `./data`.
 
 ```bash
 ./deploy.sh user@host /opt/haulora --with-data   # first time: ships routes, evals, history

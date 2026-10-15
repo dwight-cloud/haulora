@@ -20,6 +20,7 @@ services:
       AGENT_MAX_RUN_COST_USD: ${AGENT_MAX_RUN_COST_USD:-0.6}
       AGENT_DAILY_SPEND_CAP_USD: ${AGENT_DAILY_SPEND_CAP_USD:-10}
       AUTO_EXECUTE_LOW_RISK: ${AUTO_EXECUTE_LOW_RISK:-1}
+      COOKIE_SECURE: ${COOKIE_SECURE:-0}
       DB_PATH: /app/data/fleet.db
     volumes:
       - ./data:/app/data
@@ -31,6 +32,7 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
