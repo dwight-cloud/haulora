@@ -6,6 +6,8 @@ This is a proof of concept built for a case study. It is honest about what is li
 
 ## What it does
 
+Two faces on one system: the office (Overview, Trucks, Delivery jobs, Customers, Road problems, Your decisions) and a driver phone app at `/driver` (today's jobs, start and deliver, share location, report a road problem, which wakes the disruption agent). `/driver-preview` shows the driver app inside a phone frame for reviewers on a laptop.
+
 Pages a dispatcher already understands: Overview, Fleet, Loads, Customers, Disruptions, Decisions. The AI agents live inside them. A read-only helper ("Ask Haulora", bottom right) explains the system, says what to click, and describes what is happening in the fleet right now; it can never change anything and runs under the same cost caps as the agents.
 
 | Agent | Trigger | Decides | Proposes | Metric |
