@@ -8,7 +8,7 @@ async function getSessionFromRequest(req: NextRequest) {
   return verifySession(token);
 }
 
-const DISPATCHER_ROUTES = ["/dashboard", "/agents", "/approvals", "/evals", "/plan", "/sequence", "/tours", "/team"];
+const DISPATCHER_ROUTES = ["/dashboard", "/fleet", "/loads", "/customers", "/disruptions", "/decisions", "/agents", "/approvals", "/evals", "/plan", "/sequence", "/tours", "/team"];
 const DRIVER_ROUTES: string[] = [];
 
 export async function middleware(req: NextRequest) {
@@ -35,6 +35,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/dashboard/:path*", "/agents/:path*", "/approvals/:path*", "/evals/:path*", "/plan/:path*", "/sequence/:path*", "/tours/:path*", "/team/:path*",
+    "/dashboard/:path*", "/fleet/:path*", "/loads/:path*", "/customers/:path*", "/disruptions/:path*", "/decisions/:path*", "/agents/:path*", "/approvals/:path*", "/evals/:path*", "/plan/:path*", "/sequence/:path*", "/tours/:path*", "/team/:path*",
   ],
 };

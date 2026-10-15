@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowUpRight, Check, Fuel, Loader2, RefreshCw, RotateCcw, TriangleAlert, Users, X,
+  ArrowUpRight, Building2, Check, CheckSquare, Compass, Fuel, Loader2, Package, RefreshCw, RotateCcw, TriangleAlert, Truck as TruckIcon, Users, X,
 } from "lucide-react";
 import { HereMap } from "@/components/HereMap";
 import { RunStory } from "@/components/RunStory";
@@ -52,7 +52,7 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 /** Rough subscription price used only to put a recovered amount in context. */
-const SUBSCRIPTION_AUD_PER_TRUCK_MONTH = 149;
+const SUBSCRIPTION_AUD_PER_TRUCK_MONTH = 60;
 const WEEKS_PER_MONTH = 52 / 12;
 const POLL_MS = 8000;
 const MAP_TIMEOUT_MS = 8000;
@@ -62,6 +62,7 @@ export function DashboardClient({ apiKey, accountName }: { apiKey: string; accou
   const [stats, setStats] = useState<Stats | null>(null);
   const [loads, setLoads] = useState<Load[]>([]);
   const [trucks, setTrucks] = useState<Truck[]>([]);
+  const [customerCount, setCustomerCount] = useState<number | null>(null);
   const [events, setEvents] = useState<RoadEvent[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
@@ -88,11 +89,11 @@ export function DashboardClient({ apiKey, accountName }: { apiKey: string; accou
     try {
       const [s, l, e, a] = await Promise.all([
         api<Stats>("/api/stats"),
-        api<{ loads: Load[]; trucks: Truck[] }>("/api/loads"),
+        api<{ loads: Load[]; trucks: Truck[]; customers: unknown[] }>("/api/loads"),
         api<{ events: RoadEvent[] }>("/api/events"),
         api<{ actions: Action[] }>("/api/actions"),
       ]);
-      setStats(s); setLoads(l.loads); setTrucks(l.trucks); setEvents(e.events); setActions(a.actions);
+      setStats(s); setLoads(l.loads); setTrucks(l.trucks); setCustomerCount(l.customers.length); setEvents(e.events); setActions(a.actions);
       setLastRefresh(Date.now()); setDataLoaded(true);
       setError(null);
       if (!latestLoaded.current) {
@@ -165,9 +166,9 @@ export function DashboardClient({ apiKey, accountName }: { apiKey: string; accou
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Dispatcher view"
-        title="Dashboard"
-        subtitle={<>{accountName} · {stats ? (stats.mock ? "scripted plan, no model key" : "live model") : "loading…"}</>}
+        eyebrow="Fleet management"
+        title="Overview"
+        subtitle={<>Your fleet today, what needs a decision, and a safe place to try the AI agents. {accountName} · {stats ? (stats.mock ? "scripted plan, no model key" : "live model") : "loading…"}</>}
         right={
           <>
             {lastRefresh && <span className="hidden text-xs text-bitumen-400 md:inline">Updated {fmtDateTime(lastRefresh)}</span>}
@@ -186,10 +187,14 @@ export function DashboardClient({ apiKey, accountName }: { apiKey: string; accou
               <div>
                 <h2 className="text-base font-semibold text-bitumen-900">What is Haulio?</h2>
                 <p className="mt-1.5 text-[14px] leading-6 text-bitumen-700">
-                  Haulio is an AI dispatcher's assistant for a trucking company. When fuel prices move, a road closes or a driver
-                  is unavailable, an agent reads the fleet's data, works out what to do and writes up a proposal. Nothing changes
-                  until a person approves it.
+                  Haulio is a fleet management system for a trucking business: your trucks, loads, customers and road problems in one place.
+                  Three AI agents watch diesel prices, road closures and driver availability, work out what to do and write up a proposal with the numbers.
+                  Nothing changes until you approve it on the Decisions page.
                 </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" tone="accent" icon={<Compass />} onClick={() => window.dispatchEvent(new CustomEvent("haulio:tour:start"))}>Show me around</Button>
+                  <Button size="sm" onClick={() => window.dispatchEvent(new CustomEvent("haulio:helper:open"))}>Ask the helper</Button>
+                </div>
               </div>
               <div>
                 <h2 className="text-base font-semibold text-bitumen-900">What to click</h2>
@@ -207,8 +212,23 @@ export function DashboardClient({ apiKey, accountName }: { apiKey: string; accou
 
       {error && <ErrorBanner>{error}</ErrorBanner>}
 
+      {/* Your fleet today: one link per system area */}
+      <section aria-label="Your fleet today">
+        <div className="flex items-end justify-between gap-3">
+          <h2 className="text-base font-semibold text-bitumen-900">Your fleet today</h2>
+          <span className="text-[12px] text-bitumen-500">Open any area to see the detail</span>
+        </div>
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
+          <AreaLink href="/fleet" icon={<TruckIcon />} label="Fleet" value={stats ? `${stats.trucksMoving} of ${stats.trucks} moving` : "—"} />
+          <AreaLink href="/loads" icon={<Package />} label="Loads" value={stats ? `${stats.loadsInFlight} on the road` : "—"} sub={affected.length ? `${affected.length} affected` : undefined} />
+          <AreaLink href="/customers" icon={<Building2 />} label="Customers" value={customerCount != null ? `${customerCount} on contract` : "—"} sub={stats?.diesel ? `diesel ${stats.diesel.dieselCpl.toFixed(1)} c/L` : undefined} />
+          <AreaLink href="/disruptions" icon={<TriangleAlert />} label="Disruptions" value={stats ? `${stats.activeEvents} active` : "—"} tone={stats && stats.activeEvents > 0 ? "danger" : "neutral"} />
+          <AreaLink href="/decisions" icon={<CheckSquare />} label="Decisions" value={stats ? `${stats.pendingActions} waiting` : "—"} sub={stats && stats.pendingActions > 0 ? `${fmtAud(stats.pendingImpactAud)} at stake` : undefined} tone={stats && stats.pendingActions > 0 ? "accent" : "neutral"} />
+        </div>
+      </section>
+
       {/* Right now */}
-      <section aria-label="Right now">
+      <section aria-label="Right now" data-tour="overview-numbers">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
           <Stat loading={!dataLoaded} label="On the road" value={stats?.loadsInFlight ?? "—"} sub={`${inFlight.filter((l) => l.status === "en_route").length} moving now`} tone="info" />
           <Stat loading={!dataLoaded} label="Trucks moving" value={stats ? `${stats.trucksMoving} / ${stats.trucks}` : "—"} sub="of the fleet" tone="success" />
@@ -221,7 +241,7 @@ export function DashboardClient({ apiKey, accountName }: { apiKey: string; accou
 
       {/* Step 1 */}
       <StepSection n={1} title="Pick what goes wrong" lead="Each button is a shock to the business. Pressing one wakes the agent that handles it.">
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" data-tour="scenarios">
           {scenarios.map((sc) => {
             const copy = SCENARIO_COPY[sc.id];
             const isRunning = running === sc.id;
@@ -277,7 +297,7 @@ export function DashboardClient({ apiKey, accountName }: { apiKey: string; accou
       {/* Step 2 */}
       <StepSection n={2} title="Watch the agent work" lead="Every line is one thing the agent did, in order. It can read and propose, but it cannot change anything itself.">
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-          <Card>
+          <Card data-tour="agent-story">
             <CardBody>
               {latest ? <RunStory run={latest.run} steps={latest.steps} compact /> : running ? (
                 <div className="py-6 text-center text-sm text-bitumen-500">The agent is working. Its steps will appear here when it finishes.</div>
@@ -296,7 +316,7 @@ export function DashboardClient({ apiKey, accountName }: { apiKey: string; accou
           <Card>
             <CardBody className="py-8 text-center text-sm text-bitumen-500">
               {dataLoaded ? "Nothing is waiting for a decision. Run something in Step 1, or see past decisions on the " : "Loading…"}
-              {dataLoaded && <Link href="/approvals" className="font-semibold text-rust-700 hover:underline">approvals page</Link>}
+              {dataLoaded && <Link href="/decisions" className="font-semibold text-rust-700 hover:underline">Decisions page</Link>}
               {dataLoaded && "."}
             </CardBody>
           </Card>
@@ -307,7 +327,7 @@ export function DashboardClient({ apiKey, accountName }: { apiKey: string; accou
         )}
         {actions.length > pending.length && (
           <div className="mt-2 text-xs text-bitumen-500">
-            <Link href="/approvals" className="inline-flex items-center gap-1 font-semibold text-bitumen-700 hover:text-bitumen-900">All decisions, past and present <ArrowUpRight className="h-3.5 w-3.5" /></Link>
+            <Link href="/decisions" className="inline-flex items-center gap-1 font-semibold text-bitumen-700 hover:text-bitumen-900">All decisions, past and present <ArrowUpRight className="h-3.5 w-3.5" /></Link>
           </div>
         )}
       </StepSection>
@@ -319,8 +339,8 @@ export function DashboardClient({ apiKey, accountName }: { apiKey: string; accou
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-bitumen-200 pt-4 text-xs text-bitumen-500">
         <span className="font-semibold uppercase tracking-[0.12em] text-bitumen-400">For engineers</span>
-        <Link href="/agents" className="hover:text-bitumen-900">Agents, tools and every run</Link>
-        <Link href="/evals" className="hover:text-bitumen-900">Evals and cost</Link>
+        <Link href="/agents" className="hover:text-bitumen-900">AI agents, tools and every run</Link>
+        <Link href="/evals" className="hover:text-bitumen-900">Reports: accuracy and cost</Link>
         <Link href="/about" className="hover:text-bitumen-900">Architecture and data sources</Link>
       </div>
     </div>
@@ -328,6 +348,21 @@ export function DashboardClient({ apiKey, accountName }: { apiKey: string; accou
 }
 
 // -------- Sections --------
+
+function AreaLink({ href, icon, label, value, sub, tone = "neutral" }: { href: string; icon: React.ReactNode; label: string; value: string; sub?: string; tone?: "neutral" | "danger" | "accent" }) {
+  const ring = tone === "danger" ? "border-red-200 hover:border-red-300" : tone === "accent" ? "border-rust-300 bg-rust-50/40 hover:border-rust-400" : "border-bitumen-200 hover:border-rust-300";
+  return (
+    <Link href={href} className={cx("group flex items-center gap-3 rounded-xl border bg-white px-3.5 py-3 shadow-card transition hover:shadow-card-lg", ring)}>
+      <span className={cx("inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg [&>svg]:h-4 [&>svg]:w-4", tone === "accent" ? "bg-rust-500 text-white" : tone === "danger" ? "bg-red-50 text-red-700" : "bg-bitumen-50 text-bitumen-700 group-hover:text-rust-600")}>{icon}</span>
+      <span className="min-w-0">
+        <span className="block text-[11px] font-semibold uppercase tracking-[0.1em] text-bitumen-500">{label}</span>
+        <span className="block truncate text-[14px] font-semibold text-bitumen-900">{value}</span>
+        {sub && <span className="block truncate text-[11px] text-bitumen-500">{sub}</span>}
+      </span>
+      <ArrowUpRight className="ml-auto h-3.5 w-3.5 shrink-0 text-bitumen-300 group-hover:text-rust-500" />
+    </Link>
+  );
+}
 
 function StepSection({ n, title, lead, children, id }: { n: number; title: string; lead: string; children: React.ReactNode; id?: string }) {
   return (

@@ -1,17 +1,20 @@
 import Link from "next/link";
 import {
-  Bot, CheckSquare, FlaskConical, LayoutGrid, LifeBuoy, MapPinned,
-  Network, Route, Users,
+  Bot, BookOpen, CheckSquare, ClipboardList, FileBarChart, LayoutGrid, MapPinned,
+  Network, Package, Route, TriangleAlert, Truck, Users, Building2,
 } from "lucide-react";
 import { getSession } from "@/lib/auth";
+import { listActions } from "@/lib/domain/repo";
 import { Wordmark } from "./Logo";
 import { LogoutButton } from "./LogoutButton";
+import { HelperPanel } from "./HelperPanel";
+import { Tour } from "./Tour";
 
 /**
  * App shell navigation.
- *   - Logged-in dispatcher / driver: fixed left sidebar (240px); content
- *     below pads `main` via a scoped <style> so existing pages don't need
- *     layout changes.
+ *   - Logged-in dispatcher: fixed left sidebar (240px) laid out as a fleet
+ *     management system; the AI helper and guided tour are mounted here so
+ *     they appear on every signed-in page.
  *   - Everyone else (landing, login): minimal sticky top bar.
  */
 export async function Nav() {
@@ -35,7 +38,8 @@ export async function Nav() {
     );
   }
 
-  void session.role;
+  let pending = 0;
+  try { pending = listActions(session.accountId, "proposed").length; } catch { /* db unavailable */ }
 
   return (
     <>
@@ -53,34 +57,30 @@ export async function Nav() {
 
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-bitumen-200 bg-white md:flex">
         <div className="flex h-14 shrink-0 items-center border-b border-bitumen-100 px-5">
-          <Link href="/dashboard" className="rounded-md" aria-label="Haulio dashboard"><Wordmark /></Link>
+          <Link href="/dashboard" className="rounded-md" aria-label="Haulio overview"><Wordmark /></Link>
         </div>
 
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-4" aria-label="Main">
-          <SectionLabel>Dispatcher</SectionLabel>
-          <SideLink href="/dashboard" icon={<LayoutGrid />}>Dashboard</SideLink>
-          <SideLink href="/approvals" icon={<CheckSquare />}>Approvals</SideLink>
+          <SectionLabel>Fleet management</SectionLabel>
+          <SideLink href="/dashboard"   icon={<LayoutGrid />}>Overview</SideLink>
+          <SideLink href="/fleet"       icon={<Truck />}>Fleet</SideLink>
+          <SideLink href="/loads"       icon={<Package />}>Loads</SideLink>
+          <SideLink href="/customers"   icon={<Building2 />}>Customers</SideLink>
+          <SideLink href="/disruptions" icon={<TriangleAlert />}>Disruptions</SideLink>
+          <SideLink href="/decisions"   icon={<CheckSquare />} badge={pending}>Decisions</SideLink>
+          <SideLink href="/agents"      icon={<Bot />}>AI agents</SideLink>
 
-          <SectionLabel className="mt-5">For engineers</SectionLabel>
-          <SideLink href="/agents"    icon={<Bot />}>Agents &amp; runs</SideLink>
-          <SideLink href="/evals"     icon={<FlaskConical />}>Evals &amp; cost</SideLink>
+          <SectionLabel className="mt-5" small>For engineers</SectionLabel>
+          <SideLink href="/evals" icon={<FileBarChart />} small>Reports</SideLink>
+          <SideLink href="/about" icon={<BookOpen />} small>How it works</SideLink>
 
-          <SectionLabel className="mt-5">Planning</SectionLabel>
-          <SideLink href="/plan"     icon={<Route />}>Plan route</SideLink>
-          <SideLink href="/sequence" icon={<MapPinned />}>Multi-stop</SideLink>
-          <SideLink href="/tours"    icon={<Network />}>Tour planner</SideLink>
+          <SectionLabel className="mt-5" small>Planning tools</SectionLabel>
+          <SideLink href="/plan"     icon={<Route />} small>Plan a route</SideLink>
+          <SideLink href="/sequence" icon={<MapPinned />} small>Multi-stop</SideLink>
+          <SideLink href="/tours"    icon={<Network />} small>Tour planner</SideLink>
 
-          <SectionLabel className="mt-5">Admin</SectionLabel>
-          <SideLink href="/team"     icon={<Users />}>Team</SideLink>
-
-          <div className="mt-auto pt-4">
-            <Link
-              href="/about"
-              className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium text-bitumen-500 hover:bg-bitumen-50 hover:text-bitumen-700"
-            >
-              <LifeBuoy className="h-3.5 w-3.5" /> How this works
-            </Link>
-          </div>
+          <SectionLabel className="mt-5" small>Admin</SectionLabel>
+          <SideLink href="/team" icon={<Users />} small>Team</SideLink>
         </nav>
 
         <div className="flex items-center gap-2.5 border-t border-bitumen-100 px-4 py-3">
@@ -95,9 +95,9 @@ export async function Nav() {
         </div>
       </aside>
 
-      {/* Mobile shell: top bar with brand, bottom tab bar with the four copilot pages. */}
+      {/* Mobile shell: top bar with brand, bottom tab bar with the main fleet pages. */}
       <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b border-bitumen-200 bg-white/90 px-4 backdrop-blur md:hidden">
-        <Link href="/dashboard" className="rounded-md" aria-label="Haulio dashboard"><Wordmark size="sm" /></Link>
+        <Link href="/dashboard" className="rounded-md" aria-label="Haulio overview"><Wordmark size="sm" /></Link>
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-rust-500 text-[10px] font-bold text-white">
             {initials(session.name)}
@@ -105,14 +105,18 @@ export async function Nav() {
           <LogoutButton />
         </div>
       </header>
-      <nav aria-label="Main pages" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-bitumen-200 bg-white/95 backdrop-blur md:hidden">
-        <TabLink href="/dashboard" icon={<LayoutGrid />}>Dashboard</TabLink>
-        <TabLink href="/agents" icon={<Bot />}>Agents</TabLink>
-        <TabLink href="/approvals" icon={<CheckSquare />}>Approvals</TabLink>
-        <TabLink href="/evals" icon={<FlaskConical />}>Evals</TabLink>
+      <nav aria-label="Main pages" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-bitumen-200 bg-white/95 backdrop-blur md:hidden">
+        <TabLink href="/dashboard" icon={<LayoutGrid />}>Overview</TabLink>
+        <TabLink href="/fleet" icon={<Truck />}>Fleet</TabLink>
+        <TabLink href="/loads" icon={<Package />}>Loads</TabLink>
+        <TabLink href="/disruptions" icon={<TriangleAlert />}>Roads</TabLink>
+        <TabLink href="/decisions" icon={<ClipboardList />} badge={pending}>Decisions</TabLink>
       </nav>
       {/* Reserve room for the mobile tab bar */}
       <style dangerouslySetInnerHTML={{ __html: `@media (max-width: 767px) { main { padding-bottom: 5rem !important; } }` }} />
+
+      <HelperPanel />
+      <Tour />
     </>
   );
 }
@@ -130,31 +134,35 @@ function TopLink({ href, children, className = "" }: { href: string; children: R
   );
 }
 
-function SectionLabel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function SectionLabel({ children, className = "", small = false }: { children: React.ReactNode; className?: string; small?: boolean }) {
   return (
-    <div className={`px-2.5 pb-1.5 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-bitumen-400 ${className}`}>
+    <div className={`px-2.5 pb-1.5 pt-2 font-semibold uppercase tracking-[0.14em] ${small ? "text-[9px] text-bitumen-300" : "text-[10px] text-bitumen-400"} ${className}`}>
       {children}
     </div>
   );
 }
 
-function SideLink({ href, icon, children }: { href: string; icon: React.ReactNode; children: React.ReactNode }) {
+function SideLink({ href, icon, children, badge, small = false }: { href: string; icon: React.ReactNode; children: React.ReactNode; badge?: number; small?: boolean }) {
   return (
     <Link
       href={href}
-      className="group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium text-bitumen-600 transition hover:bg-bitumen-50 hover:text-bitumen-900"
+      className={`group flex items-center gap-2.5 rounded-md px-2.5 font-medium text-bitumen-600 transition hover:bg-bitumen-50 hover:text-bitumen-900 ${small ? "py-1 text-[12px]" : "py-1.5 text-[13px]"}`}
     >
-      <span className="shrink-0 text-bitumen-500 transition group-hover:text-rust-600 [&>svg]:h-4 [&>svg]:w-4">{icon}</span>
+      <span className={`shrink-0 text-bitumen-500 transition group-hover:text-rust-600 ${small ? "[&>svg]:h-3.5 [&>svg]:w-3.5" : "[&>svg]:h-4 [&>svg]:w-4"}`}>{icon}</span>
       <span className="truncate">{children}</span>
+      {badge ? (
+        <span className="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full bg-rust-500 px-1.5 text-[11px] font-bold leading-5 text-white tabular-nums" aria-label={`${badge} waiting`}>{badge}</span>
+      ) : null}
     </Link>
   );
 }
 
-function TabLink({ href, icon, children }: { href: string; icon: React.ReactNode; children: React.ReactNode }) {
+function TabLink({ href, icon, children, badge }: { href: string; icon: React.ReactNode; children: React.ReactNode; badge?: number }) {
   return (
-    <Link href={href} className="flex min-h-[56px] flex-col items-center justify-center gap-1 text-[11px] font-medium text-bitumen-600 hover:text-rust-600">
+    <Link href={href} className="relative flex min-h-[56px] flex-col items-center justify-center gap-1 text-[11px] font-medium text-bitumen-600 hover:text-rust-600">
       <span className="[&>svg]:h-5 [&>svg]:w-5">{icon}</span>
       {children}
+      {badge ? <span className="absolute right-3 top-2 inline-flex min-w-[18px] items-center justify-center rounded-full bg-rust-500 px-1 text-[10px] font-bold leading-[18px] text-white">{badge}</span> : null}
     </Link>
   );
 }

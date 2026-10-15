@@ -47,7 +47,11 @@ export function ApprovalsClient() {
 
   return (
     <div className="space-y-5">
-      <PageHeader eyebrow="Dispatcher view" title="Approvals" subtitle={all ? `${counts.proposed} waiting for you · ${fmtAud(pendingImpact)} at stake` : "loading…"} />
+      <PageHeader eyebrow="Fleet management" title="Decisions" subtitle={<>Proposals from the AI agents that need your yes or no.{all ? <> {counts.proposed} waiting for you · {fmtAud(pendingImpact)} at stake.</> : null}</>} />
+      <div data-tour="decisions" className="rounded-xl border border-rust-200 bg-rust-50/60 px-4 py-3 text-[14px] leading-6 text-bitumen-700">
+        <span className="font-semibold text-bitumen-900">Agents propose, you decide.</span> Approving applies the change immediately; rejecting discards it.
+        Low-risk housekeeping is recorded automatically. <span className="text-bitumen-500">Why this matters: nothing in Haulio changes a rate, a route or a load without a person signing it off here.</span>
+      </div>
       {error && <ErrorBanner>{error}</ErrorBanner>}
 
       <div role="tablist" aria-label="Decision status" className="inline-flex max-w-full rounded-lg border border-bitumen-200 bg-white p-1 text-sm">
@@ -66,7 +70,7 @@ export function ApprovalsClient() {
           <EmptyState
             title={tab === "proposed" ? "Nothing is waiting for you" : tab === "executed" ? "Nothing approved yet" : "Nothing rejected"}
             body={tab === "proposed" ? "When an agent proposes something, it lands here with the numbers and the customer notice ready." : "Decisions you make on the waiting tab show up here."}
-            action={<Link href="/dashboard#step-1-title" className="inline-flex min-h-[44px] items-center rounded-lg bg-rust-500 px-4 text-sm font-semibold text-white hover:bg-rust-600">Run a scenario on the dashboard</Link>}
+            action={<Link href="/dashboard#step-1-title" className="inline-flex min-h-[44px] items-center rounded-lg bg-rust-500 px-4 text-sm font-semibold text-white hover:bg-rust-600">Try a scenario on the Overview</Link>}
           />
         </Card>
       ) : (
