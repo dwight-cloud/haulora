@@ -24,7 +24,7 @@ if [[ "$WITH_DATA" == "--with-data" ]]; then
   echo "→ Shipping database"
   sqlite3 data/copilot.db "PRAGMA wal_checkpoint(TRUNCATE);" 2>/dev/null || true
   ssh "$HOST" "mkdir -p $REMOTE_DIR/data"
-  rsync -az data/copilot.db "$HOST:$REMOTE_DIR/data/haulora.db"
+  rsync -az data/copilot.db "$HOST:$REMOTE_DIR/data/fleet.db"
 fi
 # The container runs as uid 1001; the bind-mounted data dir must be writable by it.
 ssh "$HOST" "mkdir -p $REMOTE_DIR/data && sudo chown -R 1001:1001 $REMOTE_DIR/data"
