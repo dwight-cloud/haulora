@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Fuel, Loader2, Play, ShieldCheck, TriangleAlert, Users, X } from "lucide-react";
 import { AgentTrace } from "@/components/AgentTrace";
-import { Button, Card, CardBody, CardHeader, CardTitle, PageHeader, Pill } from "@/components/ui/primitives";
+import { Button, Card, CardBody, CardHeader, CardTitle, ErrorBanner, PageHeader, Pill } from "@/components/ui/primitives";
 import type { AgentName, AgentRun, AgentStep } from "@/lib/domain/types";
 import { api, ApiError, fmtDateTime, fmtDuration, fmtInt, fmtUsd } from "@/lib/ui/format";
 
@@ -126,19 +126,19 @@ export function AgentsClient() {
 
   return (
     <div className="space-y-5">
-      <PageHeader eyebrow="Copilot" title="Agents" subtitle={stats ? <>Model <span className="font-mono">{stats.model}</span>{stats.mock ? " · scripted plans (no API key configured)" : ""}</> : "loading…"} />
+      <PageHeader eyebrow="For engineers" title="Agents" subtitle={stats ? <>Each agent's trigger, tools, decision rules and caps. Model <span className="font-mono">{stats.model}</span>{stats.mock ? " · scripted plans (no API key configured)" : ""}</> : "loading…"} />
 
-      {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">{error}</div>}
+      {error && <ErrorBanner>{error}</ErrorBanner>}
 
       <div className="grid gap-4 xl:grid-cols-3">
         {AGENTS.map((a) => (
           <Card key={a.id} className="flex flex-col">
             <CardHeader>
               <div className="flex items-center gap-2.5">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-ink-900 text-white [&>svg]:h-4 [&>svg]:w-4">{a.icon}</span>
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-rust-50 text-rust-600 [&>svg]:h-4 [&>svg]:w-4">{a.icon}</span>
                 <CardTitle>{a.name}</CardTitle>
               </div>
-              <Pill tone={a.statusTone}>{a.status}</Pill>
+              <Pill tone={a.statusTone} filled>{a.status}</Pill>
             </CardHeader>
             <CardBody className="flex flex-1 flex-col gap-4">
               <dl className="space-y-1.5 text-[13px]">
@@ -149,28 +149,28 @@ export function AgentsClient() {
               </dl>
 
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-400">Tools</div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-bitumen-400">Tools</div>
                 <ul className="mt-1.5 space-y-1">
                   {a.tools.map((t) => (
                     <li key={t.name} className="flex items-start gap-2 text-xs">
-                      <code className="shrink-0 rounded bg-ink-100 px-1.5 py-0.5 font-mono text-[11px] text-ink-800">{t.name}</code>
-                      <Pill tone={t.risk === "propose" ? "warning" : "info"}>{t.risk}</Pill>
+                      <code className="shrink-0 rounded bg-bitumen-100 px-1.5 py-0.5 font-mono text-[11px] text-bitumen-800">{t.name}</code>
+                      <Pill tone={t.risk === "propose" ? "accent" : "neutral"}>{t.risk}</Pill>
                     </li>
                   ))}
                 </ul>
               </div>
 
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-400">Decision rules</div>
-                <ol className="mt-1.5 list-decimal space-y-1 pl-4 text-xs leading-5 text-ink-700">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-bitumen-400">Decision rules</div>
+                <ol className="mt-1.5 list-decimal space-y-1 pl-4 text-xs leading-5 text-bitumen-700">
                   {a.rules.map((r, i) => <li key={i}>{r}</li>)}
                 </ol>
               </div>
 
-              <div className="mt-auto flex items-center justify-between border-t border-ink-100 pt-3">
-                <span className="text-[11px] text-ink-400">Caps: {a.caps}</span>
+              <div className="mt-auto flex items-center justify-between border-t border-bitumen-100 pt-3">
+                <span className="text-[11px] text-bitumen-400">Caps: {a.caps}</span>
                 <Button
-                  tone="primary" size="sm"
+                  tone="accent" size="sm"
                   disabled={!!running}
                   onClick={() => runNow(a.id)}
                   icon={running === a.id ? <Loader2 className="animate-spin" /> : <Play />}
@@ -186,15 +186,15 @@ export function AgentsClient() {
       {/* Governance */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-ink-500" /><CardTitle>How a run is governed</CardTitle></div>
+          <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-bitumen-500" /><CardTitle>How a run is governed</CardTitle></div>
         </CardHeader>
-        <CardBody className="grid gap-4 text-[13px] leading-6 text-ink-700 md:grid-cols-3">
+        <CardBody className="grid gap-4 text-[13px] leading-6 text-bitumen-700 md:grid-cols-3">
           <div>
-            <div className="font-semibold text-ink-900">Tools are read or propose only</div>
+            <div className="font-semibold text-bitumen-900">Tools are read or propose only</div>
             There is no "execute" rating. An agent can look and it can propose; the executor is the only code that changes a rate card, a route or a status, and it runs deterministic logic per action kind.
           </div>
           <div>
-            <div className="font-semibold text-ink-900">Hard caps, enforced in the runtime</div>
+            <div className="font-semibold text-bitumen-900">Hard caps, enforced in the runtime</div>
             <ul className="mt-1 space-y-0.5">
               <li>Step cap: <b>{stats?.caps.maxSteps ?? "…"}</b> tool calls per run (agents may set lower)</li>
               <li>Per-run cost cap: <b>{stats ? fmtUsd(stats.caps.maxRunCostUsd, 2) : "…"}</b></li>
@@ -203,7 +203,7 @@ export function AgentsClient() {
             </ul>
           </div>
           <div>
-            <div className="font-semibold text-ink-900">Who decides</div>
+            <div className="font-semibold text-bitumen-900">Who decides</div>
             Low-risk actions auto-execute at proposal time (customer notices, flags for review). Everything else, including every rate-card change, re-route, hold and reassignment, waits for a dispatcher in the approval queue.
           </div>
         </CardBody>
@@ -211,10 +211,10 @@ export function AgentsClient() {
 
       {/* Runs */}
       <Card className="overflow-hidden">
-        <CardHeader><CardTitle>Runs</CardTitle><span className="text-[11px] text-ink-400">{runs.length} most recent · click to open the trace</span></CardHeader>
+        <CardHeader><CardTitle>Runs</CardTitle><span className="text-[11px] text-bitumen-400">{runs.length} most recent · click to open the trace</span></CardHeader>
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
-            <thead className="border-b border-ink-100 bg-ink-50 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-500">
+            <thead className="border-b border-bitumen-100 bg-bitumen-50 text-[11px] font-semibold uppercase tracking-[0.1em] text-bitumen-500">
               <tr>
                 <th className="px-4 py-2 text-left">Time</th>
                 <th className="px-4 py-2 text-left">Agent</th>
@@ -226,14 +226,14 @@ export function AgentsClient() {
                 <th className="px-4 py-2 text-right">Duration</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-ink-100">
-              {runs.length === 0 && <tr><td colSpan={8} className="px-4 py-6 text-center text-xs text-ink-400">No runs yet.</td></tr>}
+            <tbody className="divide-y divide-bitumen-100">
+              {runs.length === 0 && <tr><td colSpan={8} className="px-4 py-6 text-center text-xs text-bitumen-400">No runs yet.</td></tr>}
               {runs.map((r) => (
-                <tr key={r.id} onClick={() => openRun(r.id)} className="cursor-pointer hover:bg-ink-50">
-                  <td className="whitespace-nowrap px-4 py-2 text-ink-600">{fmtDateTime(r.startedAt)}</td>
-                  <td className="px-4 py-2 font-medium text-ink-900">{r.agent}</td>
-                  <td className="max-w-[280px] truncate px-4 py-2 text-ink-600" title={r.trigger}>{r.trigger}</td>
-                  <td className="px-4 py-2"><Pill tone={r.status === "completed" ? "success" : r.status === "failed" ? "danger" : "warning"}>{r.status.replace("_", " ")}</Pill></td>
+                <tr key={r.id} onClick={() => openRun(r.id)} tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") openRun(r.id); }} className="cursor-pointer hover:bg-bitumen-50 focus-visible:bg-bitumen-50">
+                  <td className="whitespace-nowrap px-4 py-2 text-bitumen-600">{fmtDateTime(r.startedAt)}</td>
+                  <td className="px-4 py-2 font-medium text-bitumen-900">{r.agent}</td>
+                  <td className="max-w-[280px] truncate px-4 py-2 text-bitumen-600" title={r.trigger}>{r.trigger}</td>
+                  <td className="px-4 py-2"><Pill tone={r.status === "completed" ? "success" : r.status === "failed" ? "danger" : "warning"} filled>{r.status.replace("_", " ")}</Pill></td>
                   <td className="px-4 py-2 text-right font-mono">{r.toolCalls}</td>
                   <td className="px-4 py-2 text-right font-mono">{fmtInt(r.inputTokens + r.outputTokens)}</td>
                   <td className="px-4 py-2 text-right font-mono">{fmtUsd(r.costUsd)}</td>
@@ -247,10 +247,10 @@ export function AgentsClient() {
 
       {/* Trace drawer */}
       {open && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-ink-900/40" onClick={() => setOpen(null)}>
-          <div className="h-full w-full max-w-3xl overflow-y-auto bg-white p-6 shadow-card-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex justify-end bg-bitumen-900/50" onClick={() => setOpen(null)} role="dialog" aria-modal="true" aria-label="Run trace">
+          <div className="h-full w-full max-w-3xl overflow-y-auto bg-white p-4 shadow-card-lg md:p-6" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-500">Run trace · <span className="font-mono normal-case tracking-normal">{open.run.id}</span></div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-bitumen-500">Run trace · <span className="font-mono normal-case tracking-normal">{open.run.id}</span></div>
               <Button size="sm" icon={<X />} onClick={() => setOpen(null)}>Close</Button>
             </div>
             <AgentTrace run={open.run} steps={open.steps} />
@@ -264,8 +264,8 @@ export function AgentsClient() {
 function Row({ k, v }: { k: string; v: string }) {
   return (
     <div className="grid grid-cols-[64px_1fr] gap-2">
-      <dt className="pt-0.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-400">{k}</dt>
-      <dd className="text-ink-700">{v}</dd>
+      <dt className="pt-0.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-bitumen-400">{k}</dt>
+      <dd className="text-bitumen-700">{v}</dd>
     </div>
   );
 }

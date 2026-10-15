@@ -1,24 +1,26 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Check, ChevronDown, ChevronRight, Loader2, X } from "lucide-react";
-import { Button, Card, CardBody, PageHeader, Pill } from "@/components/ui/primitives";
+import Link from "next/link";
+import { Check, Copy, Loader2, X } from "lucide-react";
+import { Button, Card, CardBody, EmptyState, ErrorBanner, PageHeader, Pill, cx } from "@/components/ui/primitives";
+import { LevyBar } from "@/app/dashboard/DashboardClient";
 import type { Action, ActionStatus } from "@/lib/domain/types";
 import { api, ApiError, fmtAud, fmtDateTime } from "@/lib/ui/format";
 
 type Tab = "proposed" | "executed" | "rejected";
 const TABS: Array<{ id: Tab; label: string; statuses: ActionStatus[] }> = [
-  { id: "proposed", label: "Proposed", statuses: ["proposed"] },
-  { id: "executed", label: "Executed", statuses: ["executed", "auto_executed", "approved"] },
+  { id: "proposed", label: "Waiting", statuses: ["proposed"] },
+  { id: "executed", label: "Approved", statuses: ["executed", "auto_executed", "approved"] },
   { id: "rejected", label: "Rejected", statuses: ["rejected", "failed"] },
 ];
 
 const KIND_LABEL: Record<string, string> = {
-  rate_card_update: "Rate card", replan_load: "Re-route", hold_load: "Hold", flag_for_review: "Review", customer_notice: "Notice",
+  rate_card_update: "Rate card", replan_load: "Re-route", hold_load: "Hold", flag_for_review: "Needs a human", customer_notice: "Customer notice", reassign_load: "Reassignment",
 };
 
 export function ApprovalsClient() {
-  const [all, setAll] = useState<Action[]>([]);
+  const [all, setAll] = useState<Action[] | null>(null);
   const [tab, setTab] = useState<Tab>("proposed");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -33,33 +35,42 @@ export function ApprovalsClient() {
     setBusy(id); setError(null);
     try {
       const r = await api<{ action: Action }>(`/api/actions/${id}`, { method: "POST", body: JSON.stringify({ decision }) });
-      setAll((xs) => xs.map((a) => (a.id === id ? r.action : a)));
+      setAll((xs) => (xs ?? []).map((a) => (a.id === id ? r.action : a)));
     } catch (e) { setError(e instanceof Error ? e.message : "Decision failed"); }
     finally { setBusy(null); }
   }
 
-  const counts = Object.fromEntries(TABS.map((t) => [t.id, all.filter((a) => t.statuses.includes(a.status)).length])) as Record<Tab, number>;
-  const visible = all.filter((a) => TABS.find((t) => t.id === tab)!.statuses.includes(a.status));
-  const pendingImpact = all.filter((a) => a.status === "proposed").reduce((s, a) => s + (a.impactAud || 0), 0);
+  const list = all ?? [];
+  const counts = Object.fromEntries(TABS.map((t) => [t.id, list.filter((a) => t.statuses.includes(a.status)).length])) as Record<Tab, number>;
+  const visible = list.filter((a) => TABS.find((t) => t.id === tab)!.statuses.includes(a.status));
+  const pendingImpact = list.filter((a) => a.status === "proposed").reduce((s, a) => s + (a.impactAud || 0), 0);
 
   return (
     <div className="space-y-5">
-      <PageHeader eyebrow="Copilot" title="Approvals" subtitle={`${counts.proposed} waiting · ${fmtAud(pendingImpact)} at stake`} />
-      {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">{error}</div>}
+      <PageHeader eyebrow="Dispatcher view" title="Approvals" subtitle={all ? `${counts.proposed} waiting for you · ${fmtAud(pendingImpact)} at stake` : "loading…"} />
+      {error && <ErrorBanner>{error}</ErrorBanner>}
 
-      <div className="inline-flex rounded-lg border border-ink-200 bg-white p-1 text-sm">
+      <div role="tablist" aria-label="Decision status" className="inline-flex max-w-full rounded-lg border border-bitumen-200 bg-white p-1 text-sm">
         {TABS.map((t) => (
-          <button key={t.id} type="button" onClick={() => setTab(t.id)}
-            className={`rounded-md px-3 py-1.5 font-semibold transition ${tab === t.id ? "bg-ink-900 text-white" : "text-ink-500 hover:text-ink-900"}`}>
-            {t.label} <span className={`ml-1 font-mono text-[11px] ${tab === t.id ? "text-white/70" : "text-ink-400"}`}>{counts[t.id]}</span>
+          <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
+            className={cx("inline-flex min-h-[40px] items-center rounded-md px-3 font-semibold transition", tab === t.id ? "bg-bitumen-900 text-white" : "text-bitumen-500 hover:text-bitumen-900")}>
+            {t.label} <span className={cx("ml-1.5 rounded-full px-1.5 font-mono text-[11px] tabular-nums", tab === t.id ? "bg-white/15 text-white" : "bg-bitumen-100 text-bitumen-500")}>{counts[t.id]}</span>
           </button>
         ))}
       </div>
 
-      {visible.length === 0 ? (
-        <Card><CardBody className="py-10 text-center text-sm text-ink-400">Nothing here{tab === "proposed" ? ". Run a scenario from the dashboard." : "."}</CardBody></Card>
+      {all === null ? (
+        <div className="grid gap-3 lg:grid-cols-2">{[0, 1].map((i) => <div key={i} className="h-56 animate-pulse rounded-xl border border-bitumen-200 bg-bitumen-50" />)}</div>
+      ) : visible.length === 0 ? (
+        <Card>
+          <EmptyState
+            title={tab === "proposed" ? "Nothing is waiting for you" : tab === "executed" ? "Nothing approved yet" : "Nothing rejected"}
+            body={tab === "proposed" ? "When an agent proposes something, it lands here with the numbers and the customer notice ready." : "Decisions you make on the waiting tab show up here."}
+            action={<Link href="/dashboard#step-1-title" className="inline-flex min-h-[44px] items-center rounded-lg bg-rust-500 px-4 text-sm font-semibold text-white hover:bg-rust-600">Run a scenario on the dashboard</Link>}
+          />
+        </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="grid gap-3 lg:grid-cols-2">
           {visible.map((a) => <ActionCard key={a.id} a={a} busy={busy === a.id} onDecide={decide} />)}
         </div>
       )}
@@ -68,108 +79,111 @@ export function ApprovalsClient() {
 }
 
 function ActionCard({ a, busy, onDecide }: { a: Action; busy: boolean; onDecide: (id: string, d: "approve" | "reject") => void }) {
-  const [open, setOpen] = useState(false);
   const payload = (a.payload as { kind?: string; data?: Record<string, unknown> } | null) ?? {};
   const data = payload.data ?? {};
-  const riskTone = a.risk === "high" ? "danger" : a.risk === "medium" ? "warning" : "neutral";
-  const statusTone = a.status === "proposed" ? "info" : a.status === "rejected" || a.status === "failed" ? "danger" : "success";
+  const riskTone = a.risk === "high" ? "danger" : a.risk === "medium" ? "warning" : "success";
+  const statusTone = a.status === "proposed" ? "accent" : a.status === "rejected" || a.status === "failed" ? "danger" : "success";
   const impactLabel = a.kind === "rate_card_update" ? "per week" : a.impactAud ? "cargo value" : "";
 
   return (
-    <Card>
-      <CardBody className="p-4 md:p-5">
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Pill tone="neutral">{a.agent}</Pill>
-              <Pill tone="neutral">{KIND_LABEL[a.kind] ?? a.kind}</Pill>
-              <Pill tone={riskTone}>{a.risk} risk</Pill>
-              {a.status !== "proposed" && <Pill tone={statusTone}>{a.status.replace("_", " ")}</Pill>}
-            </div>
-            <div className="mt-2 text-[15px] font-semibold leading-6 text-ink-900">{a.title}</div>
-            {a.description && <p className="mt-1 text-[13px] leading-6 text-ink-600">{a.description}</p>}
-
-            <Detail a={a} data={data} open={open} setOpen={setOpen} />
-
-            <div className="mt-2 text-xs text-ink-400">
-              Proposed {fmtDateTime(a.createdAt)}
-              {a.decidedAt && <> · {a.status.replace("_", " ")} {fmtDateTime(a.decidedAt)}{a.decidedBy ? ` by ${a.decidedBy}` : ""}</>}
-              {a.result && <> · {a.result}</>}
-            </div>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-4 md:flex-col md:items-end">
-            {a.impactAud ? (
-              <div className="text-right">
-                <div className="text-lg font-bold tracking-tight text-ink-900">{fmtAud(a.impactAud, { sign: a.kind === "rate_card_update" })}</div>
-                <div className="text-[11px] text-ink-400">{impactLabel}</div>
-              </div>
-            ) : null}
-            {a.status === "proposed" && (
-              <div className="flex gap-1.5">
-                <Button tone="primary" size="sm" disabled={busy} icon={busy ? <Loader2 className="animate-spin" /> : <Check />} onClick={() => onDecide(a.id, "approve")}>Approve</Button>
-                <Button size="sm" disabled={busy} icon={<X />} onClick={() => onDecide(a.id, "reject")}>Reject</Button>
-              </div>
-            )}
-          </div>
+    <Card className="flex flex-col">
+      <CardBody className="flex flex-1 flex-col p-4 md:p-5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Pill tone="neutral">{a.agent} agent</Pill>
+          <Pill tone="neutral">{KIND_LABEL[a.kind] ?? a.kind}</Pill>
+          <Pill tone={riskTone} filled>{a.risk} risk</Pill>
+          {a.status !== "proposed" && <Pill tone={statusTone} filled>{a.status.replace("_", " ")}</Pill>}
         </div>
+
+        <div className="mt-3 flex items-start justify-between gap-4">
+          <div className="min-w-0 text-[15px] font-semibold leading-6 text-bitumen-900">{a.title}</div>
+          {a.impactAud ? (
+            <div className="shrink-0 text-right">
+              <div className="text-2xl font-bold tracking-tight text-bitumen-900 tabular-nums">{fmtAud(a.impactAud, { sign: a.kind === "rate_card_update" })}</div>
+              <div className="text-[11px] text-bitumen-400">{impactLabel}</div>
+            </div>
+          ) : null}
+        </div>
+        {a.description && <p className="mt-1 text-[13px] leading-6 text-bitumen-600">{a.description}</p>}
+
+        <Detail a={a} data={data} />
+
+        <div className="mt-3 text-xs text-bitumen-400">
+          Proposed {fmtDateTime(a.createdAt)}
+          {a.decidedAt && <> · {a.status.replace("_", " ")} {fmtDateTime(a.decidedAt)}{a.decidedBy ? ` by ${a.decidedBy}` : ""}</>}
+          {a.result && <> · {a.result}</>}
+        </div>
+
+        {a.status === "proposed" && (
+          <div className="mt-4 flex gap-2">
+            <Button tone="accent" className="flex-1" disabled={busy} icon={busy ? <Loader2 className="animate-spin" /> : <Check />} onClick={() => onDecide(a.id, "approve")}>Approve</Button>
+            <Button className="flex-1" disabled={busy} icon={<X />} onClick={() => onDecide(a.id, "reject")}>Reject</Button>
+          </div>
+        )}
       </CardBody>
     </Card>
   );
 }
 
-function Detail({ a, data, open, setOpen }: { a: Action; data: Record<string, unknown>; open: boolean; setOpen: (v: boolean) => void }) {
+function Detail({ a, data }: { a: Action; data: Record<string, unknown> }) {
   if (a.kind === "rate_card_update") {
     return (
-      <div className="mt-3">
-        <div className="flex flex-wrap gap-2 text-xs">
-          <Chip k="Levy" v={`${Number(data.oldLevyPct).toFixed(1)}% → ${Number(data.newLevyPct).toFixed(1)}%`} />
-          <Chip k="Effective" v={String(data.effectiveDate ?? "—")} />
-        </div>
-        <button type="button" onClick={() => setOpen(!open)} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-ink-600 hover:text-ink-900">
-          {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />} Drafted customer notice
-        </button>
-        {open && (
-          <pre className="mt-2 whitespace-pre-wrap rounded-lg border border-ink-200 bg-ink-50 p-4 font-sans text-[13px] leading-6 text-ink-800">{String(data.noticeBody ?? "")}</pre>
-        )}
+      <div className="mt-2">
+        <LevyBar oldPct={Number(data.oldLevyPct)} newPct={Number(data.newLevyPct)} />
+        <div className="mt-2 text-xs text-bitumen-500">Takes effect {String(data.effectiveDate ?? "—")}, after the contract's notice period.</div>
+        {typeof data.noticeBody === "string" && <Quote label="Drafted customer notice" text={data.noticeBody} />}
       </div>
     );
   }
   if (a.kind === "replan_load") {
     return (
-      <div className="mt-3 flex flex-wrap gap-2 text-xs">
-        <Chip k="Detour" v={`${Number(data.km).toFixed(0)} km`} />
-        <Chip k="Hours" v={`${Number(data.hours).toFixed(1)} h`} />
-        {data.eventId ? <Chip k="Event" v={String(data.eventId)} /> : null}
+      <div className="mt-3 grid grid-cols-2 gap-2 text-center sm:grid-cols-3">
+        <Fact v={`${Number(data.km).toFixed(0)} km`} k="detour length" />
+        <Fact v={`${Number(data.hours).toFixed(1)} h`} k="driving time" />
+        {data.eventId ? <Fact v="1" k="closure avoided" /> : null}
       </div>
     );
   }
   if (a.kind === "flag_for_review") {
     return (
-      <div className="mt-3 rounded-lg border border-ink-200 bg-ink-50 px-3 py-2 text-[13px] leading-6">
-        <div className="font-semibold text-ink-900">{String(data.subject ?? "")}</div>
-        <div className="text-ink-700">{String(data.detail ?? "")}</div>
+      <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] leading-6 text-amber-950">
+        <div className="font-semibold">{String(data.subject ?? "")}</div>
+        <div>{String(data.detail ?? "")}</div>
       </div>
     );
   }
   if (a.kind === "customer_notice") {
-    return (
-      <div className="mt-3 rounded-lg border border-ink-200 bg-ink-50 px-3 py-2 text-[13px] leading-6">
-        <div className="font-semibold text-ink-900">{String(data.subject ?? "")} <span className="font-normal text-ink-400">· {String(data.channel ?? "email")}</span></div>
-        <div className="text-ink-700">{String(data.body ?? "")}</div>
-      </div>
-    );
+    return <Quote label={`${String(data.subject ?? "Notice")} · ${String(data.channel ?? "email")}`} text={String(data.body ?? "")} />;
   }
   if (a.kind === "hold_load") {
-    return <div className="mt-3 text-[13px] text-ink-700">Hold reason: {String(data.reason ?? "")}</div>;
+    return <div className="mt-3 text-[13px] leading-6 text-bitumen-700"><span className="font-semibold text-bitumen-900">Why hold:</span> {String(data.reason ?? "")}</div>;
   }
   return null;
 }
 
-function Chip({ k, v }: { k: string; v: string }) {
+function Fact({ v, k }: { v: string; k: string }) {
   return (
-    <span className="inline-flex items-baseline gap-1 rounded-md border border-ink-200 bg-white px-2 py-0.5">
-      <span className="text-ink-400">{k}</span><span className="font-mono font-semibold text-ink-800">{v}</span>
-    </span>
+    <div className="rounded-lg border border-bitumen-200 bg-bitumen-50 px-2 py-2">
+      <div className="text-base font-bold text-bitumen-900 tabular-nums">{v}</div>
+      <div className="text-[11px] text-bitumen-500">{k}</div>
+    </div>
+  );
+}
+
+function Quote({ label, text }: { label: string; text: string }) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* clipboard blocked */ }
+  }
+  return (
+    <figure className="mt-3 rounded-lg border-l-4 border-rust-300 bg-bitumen-50 px-4 py-3">
+      <figcaption className="flex items-center justify-between gap-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-bitumen-500">
+        {label}
+        <button type="button" onClick={copy} className="inline-flex min-h-[32px] items-center gap-1 rounded-md px-1.5 normal-case tracking-normal text-bitumen-600 hover:text-bitumen-900">
+          <Copy className="h-3.5 w-3.5" /> {copied ? "Copied" : "Copy"}
+        </button>
+      </figcaption>
+      <blockquote className="mt-1 whitespace-pre-wrap text-[13px] leading-6 text-bitumen-800">{text}</blockquote>
+    </figure>
   );
 }

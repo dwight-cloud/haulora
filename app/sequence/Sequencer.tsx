@@ -103,7 +103,7 @@ export function MultiStopSequencer({ apiKey }: { apiKey: string }) {
 
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-[420px_1fr]">
-      <div className="rounded-2xl border border-ink-200 bg-white p-4 shadow-card space-y-3">
+      <div className="rounded-2xl border border-bitumen-200 bg-white p-4 shadow-card space-y-3">
         <PlaceInput
           label="Pickup (start)"
           value={start.label}
@@ -113,7 +113,7 @@ export function MultiStopSequencer({ apiKey }: { apiKey: string }) {
         />
 
         <div>
-          <div className="text-xs font-semibold uppercase tracking-widest text-ink-500">Stops (HERE optimizes the order)</div>
+          <div className="text-xs font-semibold uppercase tracking-widest text-bitumen-500">Stops (HERE optimizes the order)</div>
           <div className="mt-2 space-y-2">
             {stops.map((s, i) => (
               <div key={i} className="flex gap-2">
@@ -129,7 +129,7 @@ export function MultiStopSequencer({ apiKey }: { apiKey: string }) {
                 <button
                   type="button"
                   onClick={() => removeStop(i)}
-                  className="self-end rounded-lg border border-ink-200 px-2 py-2 text-xs text-ink-500 hover:text-red-700"
+                  className="self-end rounded-lg border border-bitumen-200 px-2 py-2 text-xs text-bitumen-500 hover:text-red-700"
                   title="Remove stop"
                 >✕</button>
               </div>
@@ -138,7 +138,7 @@ export function MultiStopSequencer({ apiKey }: { apiKey: string }) {
           <button
             type="button"
             onClick={addStop}
-            className="mt-2 text-xs font-semibold text-ink-600 hover:text-ink-900"
+            className="mt-2 text-xs font-semibold text-bitumen-600 hover:text-bitumen-900"
           >+ Add another stop</button>
         </div>
 
@@ -151,15 +151,15 @@ export function MultiStopSequencer({ apiKey }: { apiKey: string }) {
         />
 
         <div className="flex items-center gap-3">
-          <label className="text-xs font-semibold uppercase tracking-widest text-ink-500">Optimize for</label>
-          <div className="flex gap-1 rounded-lg bg-ink-50 p-1">
+          <label className="text-xs font-semibold uppercase tracking-widest text-bitumen-500">Optimize for</label>
+          <div className="flex gap-1 rounded-lg bg-bitumen-50 p-1">
             {(["time", "distance"] as const).map((k) => (
               <button
                 key={k}
                 type="button"
                 onClick={() => setImproveFor(k)}
                 className={`rounded px-3 py-1 text-xs font-bold capitalize ${
-                  improveFor === k ? "bg-white text-ink-900 shadow-sm" : "text-ink-500"
+                  improveFor === k ? "bg-white text-bitumen-900 shadow-sm" : "text-bitumen-500"
                 }`}
               >{k}</button>
             ))}
@@ -170,7 +170,7 @@ export function MultiStopSequencer({ apiKey }: { apiKey: string }) {
           type="button"
           onClick={compute}
           disabled={loading || !start.label.trim() || stops.filter((s) => s.label.trim()).length === 0}
-          className="w-full rounded-lg bg-ink-900 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+          className="w-full rounded-lg bg-bitumen-900 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
         >
           {loading ? "Optimizing…" : "Optimize order"}
         </button>
@@ -179,23 +179,23 @@ export function MultiStopSequencer({ apiKey }: { apiKey: string }) {
         {sequence && (
           <div className="space-y-2">
             {totals && (
-              <div className="rounded-lg bg-ink-50 p-3 text-sm">
-                <div className="text-xs font-semibold uppercase tracking-widest text-ink-500">Optimized tour</div>
+              <div className="rounded-lg bg-bitumen-50 p-3 text-sm">
+                <div className="text-xs font-semibold uppercase tracking-widest text-bitumen-500">Optimized tour</div>
                 <div className="mt-1 flex gap-4 font-mono">
                   <div><b>{totals.miles.toFixed(0)}</b> mi</div>
                   <div><b>{totals.hours.toFixed(1)}</b> h</div>
                 </div>
               </div>
             )}
-            <ol className="divide-y divide-ink-100 rounded-lg border border-ink-200">
+            <ol className="divide-y divide-bitumen-100 rounded-lg border border-bitumen-200">
               {sequence.map((s, i) => (
                 <li key={s.id} className="flex items-start gap-3 px-3 py-2">
-                  <span className="mt-0.5 inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-ink-900 text-xs font-bold text-white">
+                  <span className="mt-0.5 inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-bitumen-900 text-xs font-bold text-white">
                     {i + 1}
                   </span>
                   <div className="min-w-0">
                     <div className="font-semibold text-sm truncate">{s.label}</div>
-                    <div className="font-mono text-[10px] text-ink-500">{s.lat.toFixed(4)}, {s.lon.toFixed(4)}</div>
+                    <div className="font-mono text-[10px] text-bitumen-500">{s.lat.toFixed(4)}, {s.lon.toFixed(4)}</div>
                   </div>
                 </li>
               ))}
@@ -204,7 +204,7 @@ export function MultiStopSequencer({ apiKey }: { apiKey: string }) {
         )}
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-ink-200 bg-white p-2 shadow-card">
+      <div className="overflow-hidden rounded-2xl border border-bitumen-200 bg-white p-2 shadow-card">
         <HereMap
           apiKey={apiKey}
           markers={markers}

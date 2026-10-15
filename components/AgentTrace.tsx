@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   AlertTriangle, Bot, CheckCircle2, ChevronDown, ChevronRight, Cpu, Eye, FileText,
   Lightbulb, Send, ShieldAlert, Wrench, XCircle,
@@ -14,43 +14,111 @@ const asObj = (p: unknown): Payload => (p && typeof p === "object" && !Array.isA
 
 const AGENT_LABEL: Record<string, string> = { fuel: "Fuel agent", disruption: "Disruption agent", capacity: "Capacity agent" };
 
+/** Plain-English verb for each tool, used in the one-line step summary. */
+const TOOL_VERB: Record<string, string> = {
+  get_latest_diesel_price: "Checked the latest diesel price",
+  get_price_history: "Pulled recent diesel prices",
+  list_customer_contracts: "Read every customer contract",
+  compute_levy: "Called compute_levy",
+  trip_fuel_cost: "Costed a trip's fuel",
+  propose_rate_card_update: "Proposed a rate-card update",
+  flag_for_review: "Flagged for review",
+  list_active_disruptions: "Listed active disruptions",
+  find_affected_loads: "Found loads crossing the event",
+  weather_along_route: "Sampled weather along the route",
+  plan_detour: "Planned a truck-legal detour",
+  propose_replan: "Proposed a re-route",
+  propose_hold: "Proposed a hold",
+  escalate: "Escalated to a human",
+  draft_customer_notice: "Drafted a customer notice",
+  list_fleet_availability: "Listed fleet availability",
+  list_uncovered_loads: "Listed uncovered loads",
+  fatigue_check: "Ran a fatigue check",
+  propose_reassignment: "Proposed a reassignment",
+  escalate_uncovered: "Escalated an uncovered load",
+};
+
+/**
+ * Build id → human name from everything the agent saw: customer lists,
+ * affected-load lists and compute_levy results. Lets a tool call that only
+ * carries `customerId` read as "for Sunstate Grocery Wholesale".
+ */
+function buildNames(steps: AgentStep[]): Map<string, string> {
+  const names = new Map<string, string>();
+  let lastCall: { name: string | null; args: Payload } | null = null;
+  const learn = (o: unknown) => {
+    if (!o || typeof o !== "object") return;
+    if (Array.isArray(o)) { o.forEach(learn); return; }
+    const r = o as Payload;
+    const id = typeof r.id === "string" ? r.id : typeof r.loadId === "string" ? r.loadId : typeof r.customerId === "string" ? r.customerId : null;
+    const label = typeof r.name === "string" ? r.name : typeof r.ref === "string" ? r.ref : typeof r.code === "string" ? r.code : null;
+    if (id && label) names.set(id, label);
+    if (typeof r.loadId === "string" && typeof r.ref === "string") names.set(r.loadId, r.ref);
+    if (typeof r.truckId === "string" && typeof r.truckCode === "string") names.set(r.truckId, r.truckCode);
+  };
+  for (const s of steps) {
+    if (s.kind === "tool_call") { lastCall = { name: s.name, args: asObj(asObj(s.payload).args) }; continue; }
+    if (s.kind === "tool_result") {
+      learn(s.payload);
+      const r = asObj(s.payload);
+      if (lastCall && typeof r.customer === "string" && typeof lastCall.args.customerId === "string") names.set(lastCall.args.customerId, r.customer);
+    }
+  }
+  return names;
+}
+
+function callSummary(name: string | null, args: Payload, names: Map<string, string>): string {
+  const verb = (name && TOOL_VERB[name]) || `Called ${name ?? "tool"}`;
+  const idKey = ["customerId", "loadId", "truckId"].find((k) => typeof args[k] === "string");
+  if (idKey) {
+    const id = String(args[idKey]);
+    return `${verb} for ${names.get(id) ?? id}`;
+  }
+  const firstString = Object.values(args).find((v) => typeof v === "string") as string | undefined;
+  if (firstString) return `${verb}: ${firstString.length > 90 ? firstString.slice(0, 88) + "…" : firstString}`;
+  return verb;
+}
+
 export function AgentTrace({ run, steps, compact = false }: { run: AgentRun; steps: AgentStep[]; compact?: boolean }) {
   const duration = run.finishedAt ? run.finishedAt - run.startedAt : null;
   const statusTone = run.status === "completed" ? "success" : run.status === "running" ? "info" : run.status === "failed" ? "danger" : "warning";
   const toolCalls = run.toolCalls || steps.filter((s) => s.kind === "tool_call").length;
+  const names = useMemo(() => buildNames(steps), [steps]);
 
   return (
     <div className="text-sm">
-      {/* Header */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="inline-flex items-center gap-1.5 font-semibold text-ink-900">
-          <Bot className="h-4 w-4 text-ink-500" /> {AGENT_LABEL[run.agent] ?? run.agent}
-        </span>
-        <Pill tone={statusTone}>{run.status.replace("_", " ")}</Pill>
-        <Pill tone={run.mock ? "neutral" : "info"}>{run.mock ? "scripted plan" : "live model"}</Pill>
-        <span className="font-mono text-[11px] text-ink-500">{run.model}</span>
-      </div>
-      <div className="mt-1 truncate text-xs text-ink-500" title={run.trigger}>Trigger: {run.trigger}</div>
-      <div className={`mt-3 grid gap-2 ${compact ? "grid-cols-3" : "grid-cols-3 md:grid-cols-6"}`}>
-        <Meta label="Tool calls" value={fmtInt(toolCalls)} />
-        <Meta label="Tokens in" value={fmtInt(run.inputTokens)} />
-        <Meta label="Tokens out" value={fmtInt(run.outputTokens)} />
-        <Meta label="Cost" value={fmtUsd(run.costUsd)} />
-        <Meta label="Duration" value={fmtDuration(duration)} />
-        <Meta label="Started" value={fmtTime(run.startedAt)} />
+      {/* Header card */}
+      <div className="rounded-xl border border-bitumen-200 bg-bitumen-50 p-4">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span className="inline-flex items-center gap-2 text-[15px] font-semibold text-bitumen-900">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-rust-500 text-white"><Bot className="h-4 w-4" /></span>
+            {AGENT_LABEL[run.agent] ?? run.agent}
+          </span>
+          <Pill tone={statusTone} filled>{run.status.replace("_", " ")}</Pill>
+          <Pill tone={run.mock ? "neutral" : "accent"} filled>{run.mock ? "scripted plan" : "live model"}</Pill>
+          <span className="font-mono text-[11px] text-bitumen-500">{run.model}</span>
+        </div>
+        <div className="mt-1.5 truncate text-xs text-bitumen-500" title={run.trigger}>Trigger: {run.trigger}</div>
+        <div className={`mt-3 grid gap-2 ${compact ? "grid-cols-3" : "grid-cols-3 md:grid-cols-5"}`}>
+          <Meta label="Tool calls" value={fmtInt(toolCalls)} />
+          <Meta label="Tokens in" value={fmtInt(run.inputTokens)} />
+          <Meta label="Tokens out" value={fmtInt(run.outputTokens)} />
+          <Meta label="Cost" value={fmtUsd(run.costUsd)} />
+          <Meta label="Duration" value={fmtDuration(duration)} />
+        </div>
       </div>
 
       {/* Timeline */}
-      <ol className="relative mt-4 space-y-0 border-l border-ink-200 pl-5">
-        {steps.map((s) => <Step key={s.id} step={s} compact={compact} />)}
+      <ol className="relative mt-4 ml-3 border-l-2 border-bitumen-200 pl-6">
+        {steps.map((s) => <Step key={s.id} step={s} compact={compact} names={names} />)}
         {run.status === "running" && (
           <li className="relative py-2">
-            <Dot className="bg-signal-500 animate-pulse" />
-            <div className="text-xs text-ink-500">Agent is working…</div>
+            <Dot className="bg-rust-500 animate-pulse" />
+            <div className="text-xs text-bitumen-500">Agent is working…</div>
           </li>
         )}
         {steps.length === 0 && run.status !== "running" && (
-          <li className="py-2 text-xs text-ink-500">No steps recorded.</li>
+          <li className="py-2 text-xs text-bitumen-500">No steps recorded.</li>
         )}
       </ol>
     </div>
@@ -59,47 +127,47 @@ export function AgentTrace({ run, steps, compact = false }: { run: AgentRun; ste
 
 function Meta({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-ink-100 bg-ink-50 px-2.5 py-1.5">
-      <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-400">{label}</div>
-      <div className="mt-0.5 font-mono text-[12px] font-semibold text-ink-800">{value}</div>
+    <div className="rounded-lg border border-bitumen-200 bg-white px-2.5 py-1.5">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-bitumen-400">{label}</div>
+      <div className="mt-0.5 font-mono text-[12px] font-semibold text-bitumen-800 tabular-nums">{value}</div>
     </div>
   );
 }
 
 function Dot({ className = "", children }: { className?: string; children?: React.ReactNode }) {
   return (
-    <span className={`absolute -left-[29px] top-2.5 flex h-[18px] w-[18px] items-center justify-center rounded-full ring-4 ring-white [&>svg]:h-3 [&>svg]:w-3 ${className}`}>
+    <span className={`absolute -left-[15px] top-2 flex h-7 w-7 items-center justify-center rounded-full ring-4 ring-white [&>svg]:h-3.5 [&>svg]:w-3.5 ${className}`}>
       {children}
     </span>
   );
 }
 
 const KIND_STYLE: Record<StepKind, { dot: string; icon: React.ReactNode; label: string }> = {
-  system:      { dot: "bg-ink-300 text-white",      icon: <Cpu />,          label: "System" },
-  thought:     { dot: "bg-ink-100 text-ink-500",    icon: <Lightbulb />,    label: "Thought" },
-  tool_call:   { dot: "bg-signal-500 text-white",   icon: <Wrench />,       label: "Tool call" },
-  tool_result: { dot: "bg-signal-100 text-signal-700", icon: <Eye />,       label: "Result" },
-  guardrail:   { dot: "bg-amber-500 text-white",    icon: <ShieldAlert />,  label: "Guardrail" },
-  proposal:    { dot: "bg-violet-500 text-white",   icon: <Send />,         label: "Proposal" },
-  final:       { dot: "bg-emerald-500 text-white",  icon: <CheckCircle2 />, label: "Final" },
-  error:       { dot: "bg-red-500 text-white",      icon: <XCircle />,      label: "Error" },
+  system:      { dot: "bg-bitumen-300 text-white",      icon: <Cpu />,          label: "System" },
+  thought:     { dot: "bg-bitumen-100 text-bitumen-500", icon: <Lightbulb />,   label: "Thought" },
+  tool_call:   { dot: "bg-bitumen-900 text-white",      icon: <Wrench />,       label: "Tool call" },
+  tool_result: { dot: "bg-white text-bitumen-600 border border-bitumen-300", icon: <Eye />, label: "Result" },
+  guardrail:   { dot: "bg-status-held text-white",      icon: <ShieldAlert />,  label: "Guardrail" },
+  proposal:    { dot: "bg-rust-500 text-white",         icon: <Send />,         label: "Proposal" },
+  final:       { dot: "bg-gum-500 text-white",          icon: <CheckCircle2 />, label: "Summary" },
+  error:       { dot: "bg-red-500 text-white",          icon: <XCircle />,      label: "Error" },
 };
 
-function Step({ step, compact }: { step: AgentStep; compact: boolean }) {
+function Step({ step, compact, names }: { step: AgentStep; compact: boolean; names: Map<string, string> }) {
   const st = KIND_STYLE[step.kind] ?? KIND_STYLE.system;
   const p = asObj(step.payload);
   return (
-    <li className="relative py-2">
+    <li className="relative py-2.5">
       <Dot className={st.dot}>{st.icon}</Dot>
-      <div className="flex items-center gap-2 text-[11px] text-ink-400">
+      <div className="flex items-center gap-2 text-[11px] text-bitumen-400">
         <span className="font-semibold uppercase tracking-[0.1em]">{st.label}</span>
         <span>#{step.seq}</span>
         <span>{fmtTime(step.createdAt)}</span>
       </div>
       <div className="mt-1">
         {step.kind === "system" && <SystemStep name={step.name} p={p} />}
-        {step.kind === "thought" && <p className="italic leading-6 text-ink-600">{String(p.text ?? "")}</p>}
-        {step.kind === "tool_call" && <ToolCall name={step.name} p={p} />}
+        {step.kind === "thought" && <p className="italic leading-6 text-bitumen-500">{String(p.text ?? "")}</p>}
+        {step.kind === "tool_call" && <ToolCall name={step.name} p={p} names={names} compact={compact} />}
         {step.kind === "tool_result" && <ToolResult name={step.name} payload={step.payload} compact={compact} />}
         {step.kind === "guardrail" && <Guardrail name={step.name} p={p} />}
         {step.kind === "proposal" && <ToolResult name={step.name} payload={step.payload} compact={compact} />}
@@ -117,35 +185,46 @@ function Step({ step, compact }: { step: AgentStep; compact: boolean }) {
 function SystemStep({ name, p }: { name: string | null; p: Payload }) {
   const caps = asObj(p.caps);
   return (
-    <div className="text-[13px] text-ink-500">
-      <span className="font-medium text-ink-700">{name ?? "system"}</span>
+    <div className="text-[13px] text-bitumen-500">
+      <span className="font-medium text-bitumen-700">Run {name ?? "started"}</span>
       {p.model ? <> · model <span className="font-mono">{String(p.model)}</span></> : null}
       {p.mock != null ? <> · {p.mock ? "scripted plan" : "live model"}</> : null}
-      {caps.maxSteps != null ? <> · caps: {String(caps.maxSteps)} steps, {fmtUsd(Number(caps.maxCost), 2)}/run, {fmtUsd(Number(caps.daily), 2)}/24h</> : null}
+      {caps.maxSteps != null ? <> · caps {String(caps.maxSteps)} steps, {fmtUsd(Number(caps.maxCost), 2)} per run, {fmtUsd(Number(caps.daily), 2)} per 24 h</> : null}
     </div>
   );
 }
 
-function ToolCall({ name, p }: { name: string | null; p: Payload }) {
+function Disclosure({ json, compact }: { json: string; compact: boolean }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-1">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="inline-flex min-h-[32px] items-center gap-1 rounded-md px-1 text-[12px] font-medium text-bitumen-500 hover:text-bitumen-900"
+      >
+        {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />} details
+      </button>
+      {open && (
+        <pre className={`mt-1 overflow-auto rounded-lg border border-bitumen-200 bg-bitumen-50 p-3 font-mono text-[11px] leading-5 text-bitumen-800 ${compact ? "max-h-56" : "max-h-96"}`}>
+          {json}
+        </pre>
+      )}
+    </div>
+  );
+}
+
+function ToolCall({ name, p, names, compact }: { name: string | null; p: Payload; names: Map<string, string>; compact: boolean }) {
   const risk = String(p.risk ?? "read");
   const args = asObj(p.args);
-  const entries = Object.entries(args);
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2">
-        <code className="rounded-md bg-ink-900 px-2 py-0.5 font-mono text-[12px] font-semibold text-white">{name}</code>
-        <Pill tone={risk === "propose" ? "warning" : "info"}>{risk}</Pill>
+        <span className="text-[13px] font-medium text-bitumen-900">{callSummary(name, args, names)}</span>
+        <Pill tone={risk === "propose" ? "accent" : "neutral"}>{risk}</Pill>
       </div>
-      {entries.length > 0 && (
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {entries.map(([k, v]) => (
-            <span key={k} className="inline-flex max-w-full items-baseline gap-1 rounded-md border border-ink-200 bg-white px-1.5 py-0.5 font-mono text-[11px] text-ink-700">
-              <span className="text-ink-400">{k}=</span>
-              <span className="truncate">{fmtArg(v)}</span>
-            </span>
-          ))}
-        </div>
-      )}
+      <Disclosure json={JSON.stringify({ tool: name, args }, null, 2)} compact={compact} />
     </div>
   );
 }
@@ -158,25 +237,13 @@ function fmtArg(v: unknown): string {
 }
 
 function ToolResult({ name, payload, compact }: { name: string | null; payload: unknown; compact: boolean }) {
-  const [open, setOpen] = useState(false);
   const json = JSON.stringify(payload, null, 2) ?? "null";
-  const summary = summarise(payload);
   return (
     <div>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-ink-200 bg-white px-2 py-1 text-left text-[12px] text-ink-700 hover:bg-ink-50"
-      >
-        {open ? <ChevronDown className="h-3.5 w-3.5 shrink-0 text-ink-400" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0 text-ink-400" />}
-        <span className="font-mono text-ink-500">{name}</span>
-        <span className="truncate text-ink-600">{summary}</span>
-      </button>
-      {open && (
-        <pre className={`mt-1.5 overflow-auto rounded-lg border border-ink-200 bg-ink-50 p-3 font-mono text-[11px] leading-5 text-ink-800 ${compact ? "max-h-56" : "max-h-96"}`}>
-          {json}
-        </pre>
-      )}
+      <div className="text-[13px] text-bitumen-700">
+        <span className="font-mono text-[12px] text-bitumen-500">{name}</span> returned {summarise(payload)}
+      </div>
+      <Disclosure json={json} compact={compact} />
     </div>
   );
 }
@@ -185,7 +252,8 @@ function summarise(v: unknown): string {
   if (Array.isArray(v)) return `${v.length} item${v.length === 1 ? "" : "s"}`;
   if (v && typeof v === "object") {
     const o = v as Payload;
-    if (typeof o.error === "string") return `error: ${o.error}`;
+    if (typeof o.error === "string") return `an error: ${o.error}`;
+    if (typeof o.actionId === "string") return `action ${o.actionId} (${String(o.status ?? "proposed")})`;
     const keys = Object.keys(o);
     const head = keys.slice(0, 4).map((k) => {
       const val = o[k];
@@ -200,19 +268,19 @@ function summarise(v: unknown): string {
 function Guardrail({ name, p }: { name: string | null; p: Payload }) {
   const reason = (() => {
     switch (name) {
-      case "daily_cap": return `24-hour spend cap reached: ${fmtUsd(Number(p.spentUsd), 2)} spent against a ${fmtUsd(Number(p.capUsd), 2)} cap. Run refused.`;
-      case "run_cost_cap": return `Per-run cost cap reached: ${fmtUsd(Number(p.costUsd))} against ${fmtUsd(Number(p.capUsd), 2)}. Loop stopped.`;
-      case "step_cap": return `Step cap of ${String(p.maxSteps)} reached. Loop stopped.`;
-      case "unknown_tool": return `Model asked for a tool that does not exist: ${String(p.name)}. Call refused.`;
-      case "invalid_arguments": return `Arguments for ${String(p.tool)} failed schema validation: ${String(p.problem)}. Model was told why.`;
-      case "bad_json": return `Model returned malformed JSON arguments for ${String(p.tool)}. Call refused.`;
+      case "daily_cap": return `The 24-hour spend cap was reached: ${fmtUsd(Number(p.spentUsd), 2)} spent against a ${fmtUsd(Number(p.capUsd), 2)} cap, so the run was refused.`;
+      case "run_cost_cap": return `This run hit its cost cap: ${fmtUsd(Number(p.costUsd))} against ${fmtUsd(Number(p.capUsd), 2)}, so the loop stopped.`;
+      case "step_cap": return `The step cap of ${String(p.maxSteps)} was reached, so the loop stopped.`;
+      case "unknown_tool": return `The model asked for a tool that does not exist (${String(p.name)}), so the call was refused.`;
+      case "invalid_arguments": return `The arguments for ${String(p.tool)} failed schema validation (${String(p.problem)}). The model was told why and asked again.`;
+      case "bad_json": return `The model returned malformed JSON arguments for ${String(p.tool)}, so the call was refused.`;
       default: return JSON.stringify(p);
     }
   })();
   return (
     <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-      <div><span className="font-semibold">{name}</span> · {reason}</div>
+      <div><span className="font-semibold">Guardrail: {name?.replace(/_/g, " ")}.</span> {reason}</div>
     </div>
   );
 }
@@ -220,8 +288,8 @@ function Guardrail({ name, p }: { name: string | null; p: Payload }) {
 function FinalStep({ text }: { text: string }) {
   const paras = text.split(/\n{2,}|\n(?=[-•\d])/).map((s) => s.trim()).filter(Boolean);
   return (
-    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] leading-6 text-emerald-950">
-      <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-emerald-700">
+    <div className="rounded-xl border border-gum-200 bg-gum-50 px-4 py-3 text-[13px] leading-6 text-gum-900">
+      <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-gum-700">
         <FileText className="h-3.5 w-3.5" /> Summary for the dispatcher
       </div>
       {paras.map((p, i) => <p key={i} className={i > 0 ? "mt-2" : ""}>{p}</p>)}

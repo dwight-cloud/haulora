@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <rect width="32" height="32" rx="7" fill="#1C1A17"/>
+  <!-- H formed by two lanes with a road chevron crossbar -->
+  <path d="M8 7v18M24 7v18" stroke="#B4471C" stroke-width="4" stroke-linecap="round"/>
+  <path d="M8 16l8-4 8 4" fill="none" stroke="#F7F4EE" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M8 22l8-4 8 4" fill="none" stroke="#B4471C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
+</svg>

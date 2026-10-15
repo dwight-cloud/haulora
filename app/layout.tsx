@@ -9,14 +9,15 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Haulio — AI dispatcher copilot for Australian road freight",
+  title: "Haulio — AI dispatch for trucking",
   description:
-    "Agentic fuel, disruption and capacity decisions for small and mid-size Australian road freight operators.",
+    "Haulio is an AI dispatcher copilot for Australian road freight: fuel, disruption and capacity agents that propose, and a dispatcher who approves.",
+  icons: { icon: [{ url: "/favicon.svg", type: "image/svg+xml" }] },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en-AU" className={inter.variable}>
       <body className="font-sans">{children}</body>
     </html>
   );

@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2 } from "lucide-react";
 
 /** Signs in as the seeded dispatcher (POST /api/auth/demo) and opens the dashboard. */
-export function DemoButton({ size = "lg", label = "Open the live demo" }: { size?: "lg" | "md"; label?: string }) {
+export function DemoButton({
+  size = "lg", label = "Open the live demo", className = "",
+}: { size?: "lg" | "md"; label?: string; className?: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,20 +28,20 @@ export function DemoButton({ size = "lg", label = "Open the live demo" }: { size
     }
   }
 
-  const pad = size === "lg" ? "h-12 px-6 text-[15px]" : "h-9 px-4 text-sm";
+  const pad = size === "lg" ? "h-12 px-6 text-[15px]" : "min-h-[44px] md:min-h-0 md:h-10 px-5 text-sm";
   return (
-    <div className="inline-flex flex-col items-start gap-2">
+    <div className={`inline-flex flex-col items-start gap-2 ${className}`}>
       <button
         type="button"
         onClick={go}
         disabled={busy}
-        className={`inline-flex items-center gap-2 rounded-lg bg-ink-900 font-semibold text-white shadow-card-lg transition hover:bg-ink-800 disabled:opacity-60 ${pad}`}
+        className={`inline-flex items-center justify-center gap-2 rounded-lg bg-rust-500 font-semibold text-white shadow-glow transition hover:bg-rust-600 disabled:opacity-60 ${pad}`}
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
         {busy ? "Signing in…" : label}
         {!busy && <ArrowRight className="h-4 w-4" />}
       </button>
-      {error && <div className="text-xs text-red-600">{error}</div>}
+      {error && <div role="alert" className="text-xs text-red-700">{error}</div>}
     </div>
   );
 }

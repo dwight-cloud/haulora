@@ -1,81 +1,83 @@
 import type { Config } from "tailwindcss";
 
+/**
+ * Haulio brand tokens.
+ *   bitumen  warm, near-black neutral for text, dark surfaces and the grey scale
+ *   rust     the single dominant accent (CTAs, the mark, active states)
+ *   gum      supporting teal-green for success and "live"
+ *   status.* load status colours used on the map legend and status chips
+ */
 export default {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        navy: {
-          DEFAULT: "#0B1E3F",
-          50:  "#F2F5FA",
-          100: "#E2E8F2",
-          200: "#C2CEE1",
-          300: "#93A6C4",
-          400: "#5F78A1",
-          500: "#37507E",
-          600: "#243B63",
-          700: "#162B4D",
-          800: "#0B1E3F",
-          900: "#061433",
-          950: "#030B21",
+        bitumen: {
+          DEFAULT: "#1C1A17",
+          50:  "#FAF8F5",
+          100: "#F3F0EB",
+          200: "#E6E1D9",
+          300: "#CFC8BD",
+          400: "#A39C91",
+          500: "#78716A",
+          600: "#57524C",
+          700: "#403C37",
+          800: "#2A2724",
+          900: "#1C1A17",
+          950: "#121110",
         },
-        // primary accent
-        signal: {
-          DEFAULT: "#1F8BFF",
-          50:  "#EAF3FF",
-          100: "#D0E3FF",
-          200: "#A2C7FF",
-          300: "#73ABFF",
-          400: "#458FFF",
-          500: "#1F8BFF",
-          600: "#0B6FDE",
-          700: "#0856AE",
-          800: "#073E7D",
-          900: "#04274E",
+        rust: {
+          DEFAULT: "#B4471C",
+          50:  "#FBF1EA",
+          100: "#F6DFCF",
+          200: "#EDBFA0",
+          300: "#E29A6E",
+          400: "#D1703D",
+          500: "#B4471C",
+          600: "#963A16",
+          700: "#782E12",
+          800: "#5C230E",
+          900: "#3F180A",
         },
-        // warning/CTA accent
-        ember: {
-          DEFAULT: "#FF6B1A",
-          300: "#FFA166",
-          500: "#FF6B1A",
-          700: "#B34200",
+        gum: {
+          DEFAULT: "#178A6E",
+          50:  "#EAF6F2",
+          100: "#CFEBE1",
+          200: "#A3D9C6",
+          300: "#6DC0A5",
+          400: "#3BA487",
+          500: "#178A6E",
+          600: "#0F6F59",
+          700: "#0D5847",
+          800: "#0B4538",
+          900: "#08352B",
         },
-        offwhite: "#F7F5F0",
-        // Neutral grayscale — used for text hierarchy, borders, surfaces.
-        // Separate from `navy` (brand) so we don't have to express "muted text"
-        // as `text-navy/60` everywhere. Neutral greys.
-        ink: {
-          50:  "#F8FAFC",
-          100: "#F1F5F9",
-          200: "#E2E8F0",
-          300: "#CBD5E1",
-          400: "#94A3B8",
-          500: "#64748B",
-          600: "#475569",
-          700: "#334155",
-          800: "#1E293B",
-          900: "#0F172A",
+        status: {
+          enroute:  "#2563EB",
+          planned:  "#8A8780",
+          rerouted: "#178A6E",
+          held:     "#D97706",
+          delayed:  "#DC2626",
         },
+        canvas: "#F7F4EE",
       },
       borderRadius: {
-        "xl":  "0.75rem",   // 12px — cards
-        "2xl": "1rem",      // 16px — hero cards
+        "xl":  "0.75rem",
+        "2xl": "1rem",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
       },
       boxShadow: {
-        // Cards rely on the 1px border primarily.
-        card:       "0 1px 2px rgba(15,23,42,0.04)",
-        "card-lg":  "0 4px 16px rgba(15,23,42,0.06)",
-        glow:       "0 0 0 1px rgba(31,139,255,0.20), 0 8px 24px rgba(31,139,255,0.22)",
-        inset:      "inset 0 1px 0 rgba(255,255,255,0.08)",
+        card:      "0 1px 2px rgba(28,26,23,0.05)",
+        "card-lg": "0 6px 20px rgba(28,26,23,0.08)",
+        glow:      "0 0 0 1px rgba(180,71,28,0.25), 0 10px 28px rgba(180,71,28,0.22)",
       },
       backgroundImage: {
-        "grid-navy":
-          "linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)",
+        "grid-dark":
+          "linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)",
         "hero-glow":
-          "radial-gradient(ellipse 80% 60% at 20% 0%, rgba(31,139,255,0.22), transparent 60%), radial-gradient(ellipse 60% 50% at 100% 100%, rgba(255,107,26,0.14), transparent 60%)",
+          "radial-gradient(ellipse 70% 60% at 15% 0%, rgba(180,71,28,0.28), transparent 60%), radial-gradient(ellipse 50% 45% at 100% 100%, rgba(23,138,110,0.18), transparent 60%)",
       },
       keyframes: {
         "fade-up": {

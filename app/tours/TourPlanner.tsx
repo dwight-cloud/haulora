@@ -155,8 +155,8 @@ export function TourPlanner({ apiKey }: { apiKey: string }) {
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-[460px_1fr]">
       <div className="space-y-4">
-        <div className="rounded-2xl border border-ink-200 bg-white p-4 shadow-card space-y-3">
-          <div className="text-xs font-semibold uppercase tracking-widest text-ink-500">Fleet</div>
+        <div className="rounded-2xl border border-bitumen-200 bg-white p-4 shadow-card space-y-3">
+          <div className="text-xs font-semibold uppercase tracking-widest text-bitumen-500">Fleet</div>
           <div className="grid grid-cols-2 gap-2">
             <Field label="Vehicles">
               <input type="number" min={1} max={20} className="input"
@@ -191,14 +191,14 @@ export function TourPlanner({ apiKey }: { apiKey: string }) {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-ink-200 bg-white p-4 shadow-card space-y-3">
+        <div className="rounded-2xl border border-bitumen-200 bg-white p-4 shadow-card space-y-3">
           <div className="flex items-center justify-between">
-            <div className="text-xs font-semibold uppercase tracking-widest text-ink-500">Jobs</div>
-            <button type="button" onClick={addJob} className="text-xs font-semibold text-ink-600 hover:text-ink-900">+ Add job</button>
+            <div className="text-xs font-semibold uppercase tracking-widest text-bitumen-500">Jobs</div>
+            <button type="button" onClick={addJob} className="text-xs font-semibold text-bitumen-600 hover:text-bitumen-900">+ Add job</button>
           </div>
           <div className="space-y-3">
             {jobs.map((j, i) => (
-              <div key={i} className="rounded-lg border border-ink-200 p-2">
+              <div key={i} className="rounded-lg border border-bitumen-200 p-2">
                 <div className="flex items-end gap-2">
                   <div className="flex-1">
                     <PlaceInput
@@ -216,7 +216,7 @@ export function TourPlanner({ apiKey }: { apiKey: string }) {
                   </Field>
                   <button type="button"
                     onClick={() => removeJob(i)}
-                    className="h-10 rounded-lg border border-ink-200 px-2 text-xs text-ink-500 hover:text-red-700"
+                    className="h-10 rounded-lg border border-bitumen-200 px-2 text-xs text-bitumen-500 hover:text-red-700"
                   >✕</button>
                 </div>
               </div>
@@ -228,18 +228,18 @@ export function TourPlanner({ apiKey }: { apiKey: string }) {
           type="button"
           onClick={optimize}
           disabled={loading || jobs.filter((j) => j.label.trim()).length === 0 || !fleet.depotLabel.trim()}
-          className="w-full rounded-lg bg-ink-900 px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
+          className="w-full rounded-lg bg-bitumen-900 px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
         >
           {loading ? "Optimizing…" : "Optimize tours"}
         </button>
         {err && <div className="rounded bg-red-50 p-2 text-xs text-red-700">{err}</div>}
 
         {solution && (
-          <div className="rounded-2xl border border-ink-200 bg-white p-4 shadow-card space-y-3">
+          <div className="rounded-2xl border border-bitumen-200 bg-white p-4 shadow-card space-y-3">
             <div className="flex items-end justify-between">
               <div>
-                <div className="text-xs font-semibold uppercase tracking-widest text-ink-500">Solution</div>
-                <div className="mt-0.5 text-xs text-ink-500">
+                <div className="text-xs font-semibold uppercase tracking-widest text-bitumen-500">Solution</div>
+                <div className="mt-0.5 text-xs text-bitumen-500">
                   {solution.tourCount} tours · {solution.stopCount} stops · {solution.totalMiles.toFixed(0)} mi · {solution.totalHours.toFixed(1)} h
                   {solution.statistic.costTotal != null && <> · cost <b>{solution.statistic.costTotal.toFixed(2)}</b></>}
                 </div>
@@ -247,7 +247,7 @@ export function TourPlanner({ apiKey }: { apiKey: string }) {
               <button
                 type="button"
                 onClick={() => setActiveTourIdx(null)}
-                className={`rounded-lg px-2.5 py-1 text-xs font-bold ${activeTourIdx == null ? "bg-ink-900 text-white" : "text-ink-500 hover:bg-ink-50"}`}
+                className={`rounded-lg px-2.5 py-1 text-xs font-bold ${activeTourIdx == null ? "bg-bitumen-900 text-white" : "text-bitumen-500 hover:bg-bitumen-50"}`}
               >All tours</button>
             </div>
 
@@ -255,7 +255,7 @@ export function TourPlanner({ apiKey }: { apiKey: string }) {
               const col = TOUR_COLORS[i % TOUR_COLORS.length];
               return (
                 <div key={t.vehicleId}
-                  className={`rounded-lg border p-2 transition ${activeTourIdx === i ? "border-ink-900 bg-ink-50/60" : "border-ink-200 hover:border-ink-300"}`}
+                  className={`rounded-lg border p-2 transition ${activeTourIdx === i ? "border-bitumen-900 bg-bitumen-50/60" : "border-bitumen-200 hover:border-bitumen-300"}`}
                 >
                   <button
                     type="button"
@@ -265,21 +265,21 @@ export function TourPlanner({ apiKey }: { apiKey: string }) {
                     <div className="flex items-center gap-2">
                       <span className="inline-block h-3 w-3 rounded-sm" style={{ background: col }} />
                       <span className="font-bold text-sm">Tour {i + 1}</span>
-                      <span className="text-xs text-ink-500">{t.vehicleId}</span>
+                      <span className="text-xs text-bitumen-500">{t.vehicleId}</span>
                     </div>
-                    <div className="font-mono text-xs text-ink-600">
+                    <div className="font-mono text-xs text-bitumen-600">
                       {t.distanceMeters != null && <>{(t.distanceMeters / 1609.344).toFixed(0)} mi · </>}
                       {t.durationSeconds != null && <>{(t.durationSeconds / 3600).toFixed(1)} h</>}
                     </div>
                   </button>
-                  <ol className="mt-1 space-y-0.5 pl-4 text-xs text-ink-600">
+                  <ol className="mt-1 space-y-0.5 pl-4 text-xs text-bitumen-600">
                     {t.stops.map((s, si) => (
                       <li key={si}>
-                        <span className="inline-block w-5 font-mono text-ink-400">{si + 1}.</span>
+                        <span className="inline-block w-5 font-mono text-bitumen-400">{si + 1}.</span>
                         <span className="font-semibold capitalize">{s.activityType}</span>
-                        <span className="ml-1 text-ink-500">{s.jobId}</span>
+                        <span className="ml-1 text-bitumen-500">{s.jobId}</span>
                         {s.arrivalISO && (
-                          <span className="ml-2 font-mono text-[10px] text-ink-400">
+                          <span className="ml-2 font-mono text-[10px] text-bitumen-400">
                             {new Date(s.arrivalISO).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                           </span>
                         )}
@@ -304,7 +304,7 @@ export function TourPlanner({ apiKey }: { apiKey: string }) {
         )}
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-ink-200 bg-white p-2 shadow-card">
+      <div className="overflow-hidden rounded-2xl border border-bitumen-200 bg-white p-2 shadow-card">
         <HereMap
           apiKey={apiKey}
           markers={markers}
@@ -320,7 +320,7 @@ export function TourPlanner({ apiKey }: { apiKey: string }) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="text-[10px] font-semibold uppercase tracking-widest text-ink-500">{label}</span>
+      <span className="text-[10px] font-semibold uppercase tracking-widest text-bitumen-500">{label}</span>
       <div className="mt-1">{children}</div>
     </label>
   );

@@ -27,6 +27,8 @@ interface Props {
   isolines?: IsolineRing[];
   incidents?: IncidentPoint[];
   height?: string;
+  /** Called once the map object exists (tiles may still be loading). */
+  onReady?: () => void;
 }
 
 declare global { interface Window { H: any; __hereLoader?: Promise<void> } }
@@ -117,21 +119,21 @@ interface TruckPoi {
 }
 
 const POI_ICON: Record<string, { color: string; letter: string }> = {
-  parking: { color: "#1F8BFF", letter: "P" },
-  stop:    { color: "#FF6B1A", letter: "T" },
-  rest:    { color: "#10B981", letter: "R" },
+  parking: { color: "#2563EB", letter: "P" },
+  stop:    { color: "#B4471C", letter: "T" },
+  rest:    { color: "#178A6E", letter: "R" },
   weigh:   { color: "#6B21A8", letter: "W" },
 };
 
 function poiMarkerIcon(H: any, kind: string) {
-  const meta = POI_ICON[kind] ?? { color: "#0B1E3F", letter: "?" };
+  const meta = POI_ICON[kind] ?? { color: "#1C1A17", letter: "?" };
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="34" viewBox="0 0 28 34"><path d="M14 0C6.268 0 0 6.268 0 14c0 10 14 20 14 20s14-10 14-20C28 6.268 21.732 0 14 0z" fill="${meta.color}"/><circle cx="14" cy="14" r="8" fill="white"/><text x="14" y="18" font-family="sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="${meta.color}">${meta.letter}</text></svg>`;
   return new H.map.Icon(svg, { size: { w: 28, h: 34 }, anchor: { x: 14, y: 34 } });
 }
 
 export function HereMap({
   apiKey, center, zoom = 5, markers = [], polyline, alternates = [], routes = [], fitToRoutes = false, markerStyle = "pin", onSelectAlternate,
-  isolines = [], incidents = [], height = "520px",
+  isolines = [], incidents = [], height = "520px", onReady,
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
@@ -176,6 +178,7 @@ export function HereMap({
         engineType: H.Map.EngineType.WEBGL,
       });
       mapRef.current = map;
+      onReady?.();
       new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
       H.ui.UI.createDefault(map, { raster: { normal: { map: baseLayer } } } as any);
 
@@ -188,7 +191,7 @@ export function HereMap({
         if (markerStyle === "label" && m.label) {
           const text = String(m.label).replace(/[<>&]/g, "");
           const w = Math.max(34, text.length * 7 + 14);
-          const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="26" viewBox="0 0 ${w} 26"><rect x="1" y="1" width="${w - 2}" height="18" rx="4" fill="#0F172A" stroke="white" stroke-width="1.5"/><path d="M${w / 2 - 4} 19 L${w / 2} 25 L${w / 2 + 4} 19 Z" fill="#0F172A"/><text x="${w / 2}" y="13.5" font-family="system-ui,sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="white">${text}</text></svg>`;
+          const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="26" viewBox="0 0 ${w} 26"><rect x="1" y="1" width="${w - 2}" height="18" rx="4" fill="#1C1A17" stroke="white" stroke-width="1.5"/><path d="M${w / 2 - 4} 19 L${w / 2} 25 L${w / 2 + 4} 19 Z" fill="#1C1A17"/><text x="${w / 2}" y="13.5" font-family="system-ui,sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="white">${text}</text></svg>`;
           const icon = new H.map.Icon(svg, { size: { w, h: 26 }, anchor: { x: w / 2, y: 26 } });
           map.addObject(new H.map.Marker({ lat: m.lat, lng: m.lon }, { icon }));
         } else {
@@ -201,7 +204,7 @@ export function HereMap({
       for (const r of routes) {
         try {
           const line = H.geo.LineString.fromFlexiblePolyline(r.polyline);
-          const poly = new H.map.Polyline(line, { style: { strokeColor: r.color ?? "#1F8BFF", lineWidth: r.width ?? 4 } });
+          const poly = new H.map.Polyline(line, { style: { strokeColor: r.color ?? "#2563EB", lineWidth: r.width ?? 4 } });
           if (r.label) (poly as any).setData?.(r.label);
           map.addObject(poly);
           const bb = poly.getBoundingBox();
@@ -215,7 +218,7 @@ export function HereMap({
         try {
           const line = H.geo.LineString.fromFlexiblePolyline(alt.polyline);
           const poly = new H.map.Polyline(line, {
-            style: { strokeColor: "rgba(11,30,63,0.45)", lineWidth: 5, lineDash: [2, 2] },
+            style: { strokeColor: "rgba(28,26,23,0.45)", lineWidth: 5, lineDash: [2, 2] },
           });
           (poly as any).__altIndex = idx;
           poly.addEventListener("tap", () => onSelectAlternate?.(idx));
@@ -226,7 +229,7 @@ export function HereMap({
       if (polyline) {
         try {
           const line = H.geo.LineString.fromFlexiblePolyline(polyline);
-          const poly = new H.map.Polyline(line, { style: { strokeColor: "#1F8BFF", lineWidth: 6 } });
+          const poly = new H.map.Polyline(line, { style: { strokeColor: "#2563EB", lineWidth: 6 } });
           map.addObject(poly);
           map.getViewModel().setLookAtData({ bounds: poly.getBoundingBox() });
         } catch (e) { origErr("polyline decode failed", e); }
@@ -234,7 +237,7 @@ export function HereMap({
 
       // Isoline reachability rings (drive-time polygons). Drawn as translucent
       // filled polygons so overlapping rings stack in darker bands.
-      const ISO_COLORS = ["rgba(16,185,129,0.22)", "rgba(245,158,11,0.22)", "rgba(239,68,68,0.22)"];
+      const ISO_COLORS = ["rgba(23,138,110,0.22)", "rgba(245,158,11,0.22)", "rgba(239,68,68,0.22)"];
       isolines.forEach((iso, i) => {
         try {
           const ring = H.geo.LineString.fromFlexiblePolyline(iso.polyline);
@@ -317,7 +320,7 @@ export function HereMap({
 
   return (
     <div className="relative">
-      <div ref={ref} style={{ width: "100%", height }} className="overflow-hidden rounded-xl bg-ink-100" />
+      <div ref={ref} style={{ width: "100%", height }} className="overflow-hidden rounded-xl bg-bitumen-100" role="region" aria-label="Map" />
 
       {/* Base style switcher */}
       <div className="absolute top-3 right-3 flex flex-col gap-1 rounded-lg bg-white/95 p-1 shadow-md ring-1 ring-black/5 backdrop-blur">
@@ -327,7 +330,7 @@ export function HereMap({
             type="button"
             onClick={() => setStyle(s.id)}
             className={`rounded px-2.5 py-1 text-xs font-medium transition ${
-              style === s.id ? "bg-ink-900 text-white" : "text-ink-900 hover:bg-ink-100"
+              style === s.id ? "bg-bitumen-900 text-white" : "text-bitumen-900 hover:bg-bitumen-100"
             }`}
           >
             {s.label}
@@ -339,15 +342,15 @@ export function HereMap({
       <div className="absolute top-3 left-3 flex flex-col gap-1 rounded-lg bg-white/95 p-1 shadow-md ring-1 ring-black/5 backdrop-blur">
         <Toggle active={showTraffic}     onClick={() => setShowTraffic((v) => !v)}    label="Traffic" color="#E11D48" />
         <Toggle active={showTruckRestr}  onClick={() => setShowTruckRestr((v) => !v)} label="Truck restrictions" color="#B45309" />
-        <Toggle active={showPois}        onClick={() => setShowPois((v) => !v)}       label="Truck stops & parking" color="#1F8BFF" />
+        <Toggle active={showPois}        onClick={() => setShowPois((v) => !v)}       label="Truck stops & parking" color="#2563EB" />
       </div>
 
       {/* POI legend */}
       {showPois && (
         <div className="absolute bottom-3 left-3 flex gap-3 rounded-lg bg-white/95 px-3 py-2 text-xs shadow-md ring-1 ring-black/5 backdrop-blur">
-          <Legend dot="#1F8BFF" label="Parking" />
-          <Legend dot="#FF6B1A" label="Truck stop" />
-          <Legend dot="#10B981" label="Rest area" />
+          <Legend dot="#2563EB" label="Parking" />
+          <Legend dot="#B4471C" label="Truck stop" />
+          <Legend dot="#178A6E" label="Rest area" />
           <Legend dot="#6B21A8" label="Weigh station" />
         </div>
       )}
@@ -361,7 +364,7 @@ function Toggle({ active, onClick, label, color }: { active: boolean; onClick: (
       type="button"
       onClick={onClick}
       className={`flex items-center gap-2 rounded px-2.5 py-1 text-xs font-medium transition ${
-        active ? "bg-ink-900 text-white" : "text-ink-900 hover:bg-ink-100"
+        active ? "bg-bitumen-900 text-white" : "text-bitumen-900 hover:bg-bitumen-100"
       }`}
     >
       <span className="h-2 w-2 rounded-full" style={{ background: active ? "white" : color }} />
@@ -372,7 +375,7 @@ function Toggle({ active, onClick, label, color }: { active: boolean; onClick: (
 
 function Legend({ dot, label }: { dot: string; label: string }) {
   return (
-    <span className="flex items-center gap-1.5 text-ink-700">
+    <span className="flex items-center gap-1.5 text-bitumen-700">
       <span className="h-2 w-2 rounded-full" style={{ background: dot }} />
       {label}
     </span>

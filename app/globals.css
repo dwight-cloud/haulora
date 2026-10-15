@@ -3,20 +3,58 @@
 @tailwind utilities;
 
 :root {
-  --navy: #0B1E3F;
-  --signal: #FF6B1A;
+  --bitumen: #1C1A17;
+  --rust: #B4471C;
+  --gum: #178A6E;
+  --canvas: #F7F4EE;
 }
 
 html, body { height: 100%; }
 body {
-  @apply bg-offwhite text-navy antialiased;
-  font-feature-settings: "cv11", "ss01";
+  @apply bg-canvas text-bitumen-900 antialiased;
+  font-feature-settings: "cv11", "ss01", "tnum";
 }
 
-/* Subtle selection color */
-::selection { background: rgba(255,107,26,0.25); }
+/* Selection in the accent */
+::selection { background: rgba(180,71,28,0.22); }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: rgba(11,30,63,0.18); border-radius: 8px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(11,30,63,0.28); }
+::-webkit-scrollbar-thumb { background: rgba(28,26,23,0.18); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(28,26,23,0.28); }
+
+/* Keyboard focus: one ring, everywhere */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--rust);
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
+
+/* Form fields */
+.input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #E6E1D9;
+  border-radius: 0.625rem;
+  padding: 0.625rem 0.875rem;
+  background: white;
+  color: #1C1A17;
+  font-size: 0.95rem;
+  transition: border-color .15s, box-shadow .15s;
+}
+.input::placeholder { color: #A39C91; }
+.input:focus {
+  outline: none;
+  border-color: var(--rust);
+  box-shadow: 0 0 0 3px rgba(180,71,28,0.15);
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

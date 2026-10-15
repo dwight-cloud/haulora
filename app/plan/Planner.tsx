@@ -175,7 +175,7 @@ export function Planner() {
         />
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[380px_1fr]">
-          <form ref={formRef} onSubmit={plan} className="space-y-4 rounded-xl border border-ink-200 bg-white p-5">
+          <form ref={formRef} onSubmit={plan} className="space-y-4 rounded-xl border border-bitumen-200 bg-white p-5">
             <PlaceInput label="Origin" value={origin} onChange={setOrigin} placeholder="Address, city, or place" />
             <PlaceInput label="Destination" value={destination} onChange={setDestination} placeholder="Address, city, or place" />
             <div className="grid grid-cols-3 gap-3">
@@ -198,14 +198,14 @@ export function Planner() {
             </label>
             <button
               disabled={loading}
-              className="w-full rounded bg-ink-900 py-2.5 font-bold text-white hover:brightness-110 disabled:opacity-50"
+              className="w-full rounded bg-bitumen-900 py-2.5 font-bold text-white hover:brightness-110 disabled:opacity-50"
             >
               {loading ? "Planning…" : "Plan truck-legal route"}
             </button>
             {error && <div className="rounded bg-red-50 p-3 text-sm text-red-700">{error}</div>}
 
             {result && active && (
-              <div className="space-y-3 rounded bg-ink-50 p-4">
+              <div className="space-y-3 rounded bg-bitumen-50 p-4">
                 {active.notices.some((n) => /violat/i.test(n.title) || n.severity === "critical") && (
                   <div className="rounded-lg border-2 border-red-500 bg-red-50 p-3">
                     <div className="flex items-center gap-2 font-bold text-red-700">
@@ -225,7 +225,7 @@ export function Planner() {
                 )}
                 {options.length > 1 && (
                   <div>
-                    <div className="text-xs font-semibold uppercase tracking-widest text-ink-500 mb-1.5">Routes</div>
+                    <div className="text-xs font-semibold uppercase tracking-widest text-bitumen-500 mb-1.5">Routes</div>
                     <div className="flex gap-1.5">
                       {options.map((o, i) => (
                         <button
@@ -233,11 +233,11 @@ export function Planner() {
                           type="button"
                           onClick={() => setSelected(i)}
                           className={`flex-1 rounded-lg border px-2 py-1.5 text-left text-xs transition ${
-                            i === selected ? "border-ink-900 bg-white shadow-sm" : "border-ink-200 bg-white/60 hover:bg-white"
+                            i === selected ? "border-bitumen-900 bg-white shadow-sm" : "border-bitumen-200 bg-white/60 hover:bg-white"
                           }`}
                         >
                           <div className="font-bold">{i === 0 ? "Recommended" : `Alt ${i}`}</div>
-                          <div className="text-ink-500">{o.distanceMiles.toFixed(0)}mi · {o.durationHours.toFixed(1)}h</div>
+                          <div className="text-bitumen-500">{o.distanceMiles.toFixed(0)}mi · {o.durationHours.toFixed(1)}h</div>
                         </button>
                       ))}
                     </div>
@@ -256,7 +256,7 @@ export function Planner() {
                 </div>
 
                 {active.spanSummary && (
-                  <div className="text-xs text-ink-600">
+                  <div className="text-xs text-bitumen-600">
                     Truck speed along route: <b>{active.spanSummary.minMph}</b>–<b>{active.spanSummary.maxMph}</b> mph
                     {" "}(avg {active.spanSummary.avgMph})
                   </div>
@@ -274,15 +274,15 @@ export function Planner() {
                 )}
 
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-widest text-ink-500">
+                  <div className="text-xs font-semibold uppercase tracking-widest text-bitumen-500">
                     Risk: {active.risk.level}
                   </div>
                   <ul className="mt-1 space-y-1 text-sm">
-                    {active.risk.factors.length === 0 && <li className="text-ink-500">No elevated factors.</li>}
+                    {active.risk.factors.length === 0 && <li className="text-bitumen-500">No elevated factors.</li>}
                     {active.risk.factors.map((f, i) => (
                       <li key={i} className="flex justify-between">
                         <span>{f.label}</span>
-                        <span className="font-mono text-ink-900">+{f.weight}</span>
+                        <span className="font-mono text-bitumen-900">+{f.weight}</span>
                       </li>
                     ))}
                   </ul>
@@ -290,17 +290,17 @@ export function Planner() {
 
                 {weather.length > 0 && (
                   <div>
-                    <div className="text-xs font-semibold uppercase tracking-widest text-ink-500">Weather along route</div>
+                    <div className="text-xs font-semibold uppercase tracking-widest text-bitumen-500">Weather along route</div>
                     <div className="mt-1.5 space-y-1.5">
                       {weather.map((w, i) => (
                         <div key={i} className="flex items-center gap-2 rounded bg-white px-2 py-1.5 text-xs">
-                          <span className="w-12 font-mono text-ink-500">
+                          <span className="w-12 font-mono text-bitumen-500">
                             {new Date(w.time).toLocaleTimeString([], { hour: "numeric" })}
                           </span>
                           <span className="flex-1 truncate">{w.shortForecast ?? "—"}</span>
                           {w.temperatureF != null && <span className="font-semibold">{w.temperatureF}°F</span>}
                           {w.windSpeedMph != null && (
-                            <span className={w.warnings.includes("high_wind") ? "font-bold text-red-600" : "text-ink-500"}>
+                            <span className={w.warnings.includes("high_wind") ? "font-bold text-red-600" : "text-bitumen-500"}>
                               {w.windSpeedMph}mph {w.windDirection}
                             </span>
                           )}
@@ -320,8 +320,8 @@ export function Planner() {
                 )}
 
                 {drivers.length > 0 && (
-                  <div className="border-t border-ink-200 pt-3">
-                    <div className="text-xs font-semibold uppercase tracking-widest text-ink-500 mb-1.5">Assign to driver</div>
+                  <div className="border-t border-bitumen-200 pt-3">
+                    <div className="text-xs font-semibold uppercase tracking-widest text-bitumen-500 mb-1.5">Assign to driver</div>
                     <div className="flex gap-2">
                       <select
                         value={driverId}
@@ -336,7 +336,7 @@ export function Planner() {
                         type="button"
                         onClick={assignToDriver}
                         disabled={assigning || !driverId}
-                        className="rounded-lg bg-ink-900 px-4 py-2 text-sm font-bold text-offwhite disabled:opacity-50"
+                        className="rounded-lg bg-bitumen-900 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
                       >
                         {assigning ? "…" : "Assign"}
                       </button>
@@ -358,7 +358,7 @@ export function Planner() {
 
                 {incidents.length > 0 && (
                   <div>
-                    <div className="text-xs font-semibold uppercase tracking-widest text-ink-500">
+                    <div className="text-xs font-semibold uppercase tracking-widest text-bitumen-500">
                       Live traffic incidents ({incidents.length})
                     </div>
                     <ul className="mt-1 max-h-48 space-y-1 overflow-y-auto text-sm">
@@ -370,9 +370,9 @@ export function Planner() {
                           />
                           <div className="flex-1">
                             <span className="font-semibold capitalize">{i.type.replace(/([A-Z])/g, " $1").trim()}</span>
-                            <span className="mx-1 text-ink-300">·</span>
-                            <span className="text-ink-600">{i.description}</span>
-                            {i.roadName && <span className="ml-1 text-xs text-ink-500">({i.roadName})</span>}
+                            <span className="mx-1 text-bitumen-300">·</span>
+                            <span className="text-bitumen-600">{i.description}</span>
+                            {i.roadName && <span className="ml-1 text-xs text-bitumen-500">({i.roadName})</span>}
                           </div>
                         </li>
                       ))}
@@ -382,12 +382,12 @@ export function Planner() {
 
                 {active.notices.length > 0 && (
                   <div>
-                    <div className="text-xs font-semibold uppercase tracking-widest text-ink-500">Route notices</div>
+                    <div className="text-xs font-semibold uppercase tracking-widest text-bitumen-500">Route notices</div>
                     <ul className="mt-1 space-y-1 text-sm">
                       {active.notices.map((n, i) => (
                         <li key={i} className="flex items-start gap-2">
                           <SeverityDot s={n.severity} />
-                          <span>{n.title} <span className="text-ink-500">({n.severity})</span></span>
+                          <span>{n.title} <span className="text-bitumen-500">({n.severity})</span></span>
                         </li>
                       ))}
                     </ul>
@@ -424,7 +424,7 @@ export function Planner() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="text-xs font-semibold uppercase tracking-widest text-ink-500">{label}</span>
+      <span className="text-xs font-semibold uppercase tracking-widest text-bitumen-500">{label}</span>
       <div className="mt-1">{children}</div>
     </label>
   );
@@ -433,13 +433,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded bg-white p-2">
-      <div className="text-[10px] uppercase tracking-widest text-ink-500">{label}</div>
+      <div className="text-[10px] uppercase tracking-widest text-bitumen-500">{label}</div>
       <div className="text-lg font-black">{value}</div>
     </div>
   );
 }
 
 function SeverityDot({ s }: { s: string }) {
-  const color = s === "critical" ? "bg-red-500" : s === "warning" ? "bg-yellow-500" : "bg-navy/40";
+  const color = s === "critical" ? "bg-red-500" : s === "warning" ? "bg-yellow-500" : "bg-bitumen-900/40";
   return <span className={`mt-1.5 h-2 w-2 flex-shrink-0 rounded-full ${color}`} />;
 }

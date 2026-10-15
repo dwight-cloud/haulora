@@ -58,7 +58,7 @@ export function PlaceInput({ label, value, onChange, onSelect, placeholder }: Pr
   return (
     <div ref={wrapRef} className="relative">
       <label className="block">
-        <span className="text-xs font-semibold uppercase tracking-widest text-ink-500">{label}</span>
+        <span className="text-xs font-semibold uppercase tracking-widest text-bitumen-500">{label}</span>
         <div className="relative mt-1.5">
           <input
             className="input"
@@ -69,13 +69,13 @@ export function PlaceInput({ label, value, onChange, onSelect, placeholder }: Pr
             autoComplete="off"
           />
           {loading && (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink-400">…</span>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-bitumen-400">…</span>
           )}
         </div>
       </label>
 
       {open && items.length > 0 && (
-        <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-lg border border-ink-200 bg-white shadow-card-lg">
+        <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-lg border border-bitumen-200 bg-white shadow-card-lg">
           {items.map((p, i) => (
             <li key={i}>
               <button
@@ -99,10 +99,10 @@ export function PlaceInput({ label, value, onChange, onSelect, placeholder }: Pr
                   }
                   setOpen(false);
                 }}
-                className="block w-full px-3 py-2 text-left text-sm hover:bg-ink-100"
+                className="block w-full px-3 py-2 text-left text-sm hover:bg-bitumen-100"
               >
-                <div className="font-semibold text-ink-900">{p.title}</div>
-                <div className="text-xs text-ink-500">{p.address}</div>
+                <div className="font-semibold text-bitumen-900">{p.title}</div>
+                <div className="text-xs text-bitumen-500">{p.address}</div>
               </button>
             </li>
           ))}

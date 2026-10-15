@@ -19,7 +19,7 @@ export default async function TeamPage() {
       <main className="mx-auto max-w-5xl px-6 py-8">
         <div className="mb-6">
           <h1 className="text-3xl font-black">Team</h1>
-          <p className="text-ink-500">
+          <p className="text-bitumen-500">
             Managing <span className="font-semibold">{s.accountName}</span> — {drivers.length} driver{drivers.length === 1 ? "" : "s"}.
           </p>
         </div>
