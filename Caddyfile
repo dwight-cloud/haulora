@@ -1,4 +1,7 @@
-{$DOMAIN:localhost} {
+# Demo is served on a bare IP over HTTP. No TLS: certificates for IP addresses
+# are impractical, and a reviewer clicking a link does not need one.
+:80 {
 	encode zstd gzip
+	header -Server
 	reverse_proxy web:3000
 }
